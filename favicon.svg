@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- The spine's double-wave: two phase-shifted strands crossing, violet on
+       the ink ground. Drawn to stay legible at 16px. -->
+  <rect width="64" height="64" rx="13" fill="#0A0C11"/>
+  <rect x=".75" y=".75" width="62.5" height="62.5" rx="12.25" fill="none" stroke="#242A38" stroke-width="1.5"/>
+  <path d="M42 8 Q18 20 32 32 Q46 44 22 56" fill="none" stroke="#6D28D9" stroke-width="6" stroke-linecap="round"/>
+  <path d="M22 8 Q46 20 32 32 Q18 44 42 56" fill="none" stroke="#A78BFA" stroke-width="6" stroke-linecap="round"/>
+</svg>

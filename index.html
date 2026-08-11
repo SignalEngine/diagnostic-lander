@@ -11,6 +11,17 @@
 <meta property="og:title" content="“That’s just how we do it.”">
 <meta property="og:description" content="The most expensive sentence in any business. I find the steps you’ve stopped seeing, put a number on what they cost, and fix them. £1,500 fixed price.">
 <meta property="og:type" content="website">
+<meta property="og:url" content="https://signalengine.github.io/diagnostic-lander/">
+<meta property="og:image" content="https://signalengine.github.io/diagnostic-lander/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="“That’s just how we do it.”">
+<meta name="twitter:description" content="The most expensive sentence in any business. I find the steps you’ve stopped seeing, put a number on what they cost, and fix them. £1,500 fixed price.">
+<meta name="twitter:image" content="https://signalengine.github.io/diagnostic-lander/og.png">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="icon" href="favicon-32.png" type="image/png" sizes="32x32">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <style>
   *,*::before,*::after{box-sizing:border-box}
   html{-webkit-text-size-adjust:100%}
@@ -573,6 +584,42 @@ footer{padding-block:3rem 4rem;color:var(--ink-3);font-size:.92rem}
 footer a{color:var(--ink-2)}
 a{color:var(--accent-text)}
 ::selection{background:var(--btn);color:#FFFFFF}
+
+/* ---- page temperature. --warmth (0..1) is written by JS from the same
+   proof-visibility signal the WebGL field warms on: the spine's strands and
+   the beat headings lean a few degrees toward the leak orange through the
+   proof beat and recover after. Temperature, not a theme swap — body text
+   never shifts. With no JS, --warmth stays 0 and nothing moves. ---- */
+:root{--warmth:0}
+.spine{color:color-mix(in oklab,var(--leak) calc(var(--warmth)*26%),var(--accent))}
+section.beat h2{filter:sepia(calc(var(--warmth)*.26))}
+
+/* ---- entrance: the spine's birth segment draws over ~300ms on load and
+   the scroll cue's contents fade in after it. Both are additive: the hero
+   copy is never gated on either. ---- */
+.sp-entrance{transition:opacity .5s ease}
+.seq .cue > *{opacity:0;transition:opacity .45s ease}
+.cue-in .cue > *{opacity:1}
+
+/* ---- the kinetic figure: the offer's £1,500 scrubs its variable weight as
+   it passes through the viewport. JS reserves the widest width up front, so
+   the scrub never moves layout; tabular figures via .num as before. ---- */
+.offer .fig{display:inline-block;white-space:nowrap}
+
+/* ---- desktop cursor: a violet dot trailing the pointer, swelling into a
+   ring over anything interactive; over the leak drawing the ring carries a
+   small splash glyph — "touch me". Created only under (pointer:fine), so
+   touch devices never see any of it; keyboard users are untouched either
+   way. ---- */
+#cur-dot,#cur-ring{position:fixed;left:0;top:0;z-index:2147483000;pointer-events:none;opacity:0}
+#cur-dot{width:6px;height:6px;margin:-3px 0 0 -3px;border-radius:50%;background:var(--accent-text)}
+#cur-ring{
+  width:36px;height:36px;margin:-18px 0 0 -18px;border-radius:50%;
+  border:1.5px solid color-mix(in srgb,var(--accent) 70%,transparent);
+  display:grid;place-items:center;
+}
+#cur-ring svg{width:13px;height:13px;color:var(--accent-text);opacity:0;transition:opacity .16s ease}
+html.cur-on,html.cur-on *{cursor:none!important}
 </style>
 
 <svg class="spine" id="spine" aria-hidden="true" focusable="false"></svg>
@@ -1102,6 +1149,12 @@ var spine = (function(){
       m += '<path class="sp-strand" d="' + pathFor(strands[i], y0, y1) + '" fill="none"' +
            ' stroke="currentColor" stroke-width="' + strands[i].w + '" opacity="' + strands[i].o + '"/>';
     }
+    /* the entrance segment: the lead strand's first viewport-height, drawn
+       once over ~300ms at load (playEntrance below). It fades away as soon
+       as the scrubbed lead strand starts drawing over the same geometry. */
+    m += '<path class="sp-entrance" d="' +
+         pathFor(strands[0], y0, Math.min(y1, y0 + window.innerHeight)) + '" fill="none"' +
+         ' stroke="currentColor" stroke-width="1.4" opacity=".55"/>';
     var leakStrand = { a: A, p: 2.2, o: 1, w: 1.1 };
     m += '<path class="sp-leak" d="' + pathFor(leakStrand, y0, y1) + '" fill="none"' +
          ' stroke="url(#leak-run)" stroke-width="1.1"/>';
@@ -1143,6 +1196,18 @@ var spine = (function(){
     }
     svg.innerHTML = m;
     geom.built = true;
+    setupEntrance();
+  }
+
+  /* entrance dash state survives rebuilds: before it has played the segment
+     is hidden (offset = length); after, it sits fully drawn. */
+  var entrancePlayed = false;
+  function setupEntrance(){
+    var p = svg.querySelector(".sp-entrance");
+    if (!p) return;
+    var len = p.getTotalLength();
+    p.style.strokeDasharray = len + " " + len;
+    p.style.strokeDashoffset = entrancePlayed ? 0 : len;
   }
 
   function rebuild(){ build(); if (rebuilt) rebuilt(); }
@@ -1163,8 +1228,59 @@ var spine = (function(){
   return {
     el: svg,
     rebuild: rebuild,
-    onRebuild: function(fn){ rebuilt = fn; }
+    onRebuild: function(fn){ rebuilt = fn; },
+    playEntrance: function(done){
+      var p = svg.querySelector(".sp-entrance");
+      if (!p || entrancePlayed) { entrancePlayed = true; if (done) done(); return; }
+      entrancePlayed = true;
+      var len = p.getTotalLength(), t0 = 0;
+      function fr(now){
+        if (!t0) t0 = now;
+        var t = Math.min(1, (now - t0) / 300);
+        var e = 1 - Math.pow(1 - t, 3);
+        p.style.strokeDashoffset = len * (1 - e);
+        if (t < 1) requestAnimationFrame(fr);
+        else if (done) done();
+      }
+      requestAnimationFrame(fr);
+    }
   };
+})();
+
+/* the entrance itself: fires as soon as the page is interactive — the hero
+   copy is already painted (it is the first frame either way), so nothing is
+   gated on this. The cue's contents fade in once the segment has drawn. */
+(function entrance(){
+  function cueIn(){ setTimeout(function(){ root.classList.add("cue-in"); }, 60); }
+  if (spine) spine.playEntrance(cueIn); else cueIn();
+})();
+
+/* ===========================================================================
+   2b. Page temperature. The same signal the WebGL field warms on — how much
+   of the proof beat is in view — lerped into a CSS custom property. The
+   spine's strands and the beat headings answer it (see the --warmth rules);
+   the range is tiny, and body text is untouched.
+   =========================================================================== */
+(function warmth(){
+  var proof = document.getElementById("proof");
+  if (!proof) return;
+  var w = 0, raf = 0, running = false;
+  function frame(){
+    var r = proof.getBoundingClientRect();
+    var vh = window.innerHeight;
+    var overlap = Math.min(r.bottom, vh) - Math.max(r.top, 0);
+    var target = Math.max(0, Math.min(1, overlap / (vh * 0.55)));
+    w += (target - w) * 0.05;
+    if (Math.abs(target - w) < 0.002) w = target;
+    root.style.setProperty("--warmth", w.toFixed(3));
+    if (running) raf = requestAnimationFrame(frame);
+  }
+  function start(){ if (running) return; running = true; raf = requestAnimationFrame(frame); }
+  function stop(){ running = false; if (raf) cancelAnimationFrame(raf); raf = 0; }
+  document.addEventListener("visibilitychange", function(){
+    if (document.hidden) stop(); else start();
+  });
+  start();
 })();
 
 /* ===========================================================================
@@ -1709,6 +1825,9 @@ function choreograph(){
       var paths = spine.el.querySelectorAll("path");
       for (var i = 0; i < paths.length; i++) {
         (function(p, i2){
+          /* the entrance segment is owned by its own 300ms load animation,
+             never by the scrub */
+          if (p.getAttribute("class") === "sp-entrance") return;
           var len = p.getTotalLength();
           if (!len) return;
           gsap.set(p, { strokeDasharray: len + " " + len, strokeDashoffset: len });
@@ -1773,7 +1892,14 @@ function choreograph(){
             scrollTrigger: {
               trigger: "#proof", start: "top 88%",
               endTrigger: "footer", end: "bottom bottom",
-              scrub: 0.4 + i2 * 0.25
+              scrub: 0.4 + i2 * 0.25,
+              /* the lead strand redraws the entrance segment's geometry:
+                 hand the segment off (fade it) the moment the scrub starts
+                 covering it, and hand it back above the fold */
+              onUpdate: i2 === 0 ? function(sf){
+                var ent = spine.el.querySelector(".sp-entrance");
+                if (ent) ent.style.opacity = sf.progress > 0.03 ? "0" : "";
+              } : undefined
             }
           }));
         })(paths[i], i);
@@ -1919,6 +2045,34 @@ function choreograph(){
         onComplete: settle
       });
     }
+
+    /* -------- one kinetic type moment: the offer's £1,500. Archivo is a
+       variable font (wght 100–900): the figure scrubs 300→750 with a small
+       tracking shift as the offer passes through the viewport. Width is
+       reserved at the heaviest weight (offsetWidth ignores the beat-reveal
+       transform), and the digits are already tabular, so the element's box
+       never moves. One element, nowhere else. -------- */
+    (function kinetic(){
+      var fig = document.querySelector(".offer .fig");
+      if (!fig) return;
+      function reserve(){
+        fig.style.minWidth = "";
+        var prev = fig.style.fontVariationSettings;
+        fig.style.fontVariationSettings = '"wght" 750';
+        var wpx = fig.offsetWidth;
+        fig.style.fontVariationSettings = prev;
+        fig.style.minWidth = (wpx + 1) + "px";
+      }
+      reserve();
+      var rT2 = 0;
+      window.addEventListener("resize", function(){
+        clearTimeout(rT2); rT2 = setTimeout(reserve, 250);
+      });
+      gsap.fromTo(fig,
+        { fontVariationSettings: '"wght" 300', letterSpacing: "-0.02em" },
+        { fontVariationSettings: '"wght" 750', letterSpacing: "-0.045em", ease: "none",
+          scrollTrigger: { trigger: ".offer", start: "top 88%", end: "top 32%", scrub: 0.4 } });
+    })();
 
     /* -------- the Work section has two live modes, chosen by width.
        ≥62rem, the show-reel: the hero's laptop artwork, cloned, sits
@@ -2337,6 +2491,135 @@ if (document.readyState === "loading") {
 })();
 </script>
 
+<script>
+/* ===========================================================================
+   Desktop pointer choreography — (pointer:fine) ONLY. Two pieces:
+   1. The cursor: a small violet dot trailing the pointer with a little lag,
+      swelling into a ring over anything interactive; over the leak drawing
+      the ring carries a splash glyph — a hint that the canvas is touchable.
+      The native cursor is hidden only while the custom one is live (first
+      real mouse/pen move), so keyboard users and touch devices never lose
+      anything.
+   2. Magnetic CTAs: each .cta leans up to 8px toward a pointer within ~60px
+      of its edge, and springs home when it leaves. GSAP-dependent; without
+      the CDN the buttons simply keep their CSS hover.
+   =========================================================================== */
+(function(){
+"use strict";
+var mq = window.matchMedia("(pointer: fine)");
+if (!mq.matches) return;
+var root = document.documentElement;
+
+var dot = document.createElement("div");
+dot.id = "cur-dot"; dot.setAttribute("aria-hidden", "true");
+var ring = document.createElement("div");
+ring.id = "cur-ring"; ring.setAttribute("aria-hidden", "true");
+ring.innerHTML =
+  '<svg viewBox="0 0 16 16" fill="none" aria-hidden="true">' +
+  '<path d="M8 3c1.7 2.5 3 4.4 3 6a3 3 0 0 1-6 0c0-1.6 1.3-3.5 3-6Z"' +
+  ' stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>' +
+  '<path d="M2.6 13.4h2.2M11.2 13.4h2.2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>' +
+  '</svg>';
+document.body.appendChild(dot);
+document.body.appendChild(ring);
+var splash = ring.querySelector("svg");
+
+var px = -100, py = -100, dx = -100, dy = -100, rx = -100, ry = -100;
+var ringScale = 0.55, ringTarget = 0.55, ringOn = 0, ringOnT = 0;
+var live = false, raf = 0;
+
+function frame(){
+  dx += (px - dx) * 0.5;  dy += (py - dy) * 0.5;
+  rx += (px - rx) * 0.22; ry += (py - ry) * 0.22;
+  ringScale += (ringTarget - ringScale) * 0.2;
+  ringOn += (ringOnT - ringOn) * 0.22;
+  dot.style.transform = "translate(" + dx.toFixed(1) + "px," + dy.toFixed(1) + "px)";
+  ring.style.transform = "translate(" + rx.toFixed(1) + "px," + ry.toFixed(1) + "px) scale(" + ringScale.toFixed(3) + ")";
+  ring.style.opacity = ringOn.toFixed(3);
+  magnetFrame();
+  raf = requestAnimationFrame(frame);
+}
+function wake(e){
+  if (e.pointerType && e.pointerType !== "mouse" && e.pointerType !== "pen") return;
+  px = e.clientX; py = e.clientY;
+  if (!live) {
+    live = true;
+    dx = rx = px; dy = ry = py;
+    root.classList.add("cur-on");
+    dot.style.opacity = "1";
+    raf = requestAnimationFrame(frame);
+  }
+}
+document.addEventListener("pointermove", wake, { passive: true });
+document.addEventListener("pointerdown", wake, { passive: true });
+document.documentElement.addEventListener("mouseleave", function(){
+  if (!live) return;
+  live = false;
+  root.classList.remove("cur-on");
+  dot.style.opacity = "0"; ring.style.opacity = "0"; ringOn = 0; ringOnT = 0;
+  cancelAnimationFrame(raf); raf = 0;
+});
+
+/* the ring: swell over anything interactive; splash glyph over the leak */
+var SEL = "a, .cta, summary, button, #leak";
+document.addEventListener("pointerover", function(e){
+  var t = e.target && e.target.closest ? e.target.closest(SEL) : null;
+  if (!t) { ringOnT = 0; ringTarget = 0.55; splash.style.opacity = "0"; return; }
+  var isLeak = t.id === "leak";
+  ringOnT = 1;
+  ringTarget = isLeak ? 1.2 : 1;
+  splash.style.opacity = isLeak ? "1" : "0";
+});
+document.addEventListener("pointerout", function(e){
+  var t = e.target && e.target.closest ? e.target.closest(SEL) : null;
+  if (t && !(e.relatedTarget && e.relatedTarget.closest && e.relatedTarget.closest(SEL))) {
+    ringOnT = 0; ringTarget = 0.55; splash.style.opacity = "0";
+  }
+});
+
+/* magnetic CTAs: attraction within ~60px of the button's edge, up to ~8px
+   of travel, springy elastic return once the pointer leaves the field */
+var mags = [];
+function magnetInit(){
+  if (!window.gsap) return;
+  var btns = document.querySelectorAll(".wrap a.cta");
+  for (var i = 0; i < btns.length; i++) {
+    /* never the decorative clone riding the laptop's screen */
+    if (btns[i].closest(".screen-copy")) continue;
+    mags.push({
+      el: btns[i], hot: false,
+      qx: gsap.quickTo(btns[i], "x", { duration: 0.3, ease: "power3.out" }),
+      qy: gsap.quickTo(btns[i], "y", { duration: 0.3, ease: "power3.out" })
+    });
+  }
+}
+function magnetFrame(){
+  if (!mags.length) return;
+  for (var i = 0; i < mags.length; i++) {
+    var m = mags[i], r = m.el.getBoundingClientRect();
+    if (!r.width) continue;
+    var inField = px > r.left - 60 && px < r.right + 60 &&
+                  py > r.top - 60 && py < r.bottom + 60;
+    if (inField) {
+      var cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+      var tx = Math.max(-8, Math.min(8, (px - cx) * 0.12));
+      var ty = Math.max(-8, Math.min(8, (py - cy) * 0.22));
+      m.qx(tx); m.qy(ty);
+      m.hot = true;
+    } else if (m.hot) {
+      m.hot = false;
+      gsap.to(m.el, { x: 0, y: 0, duration: 0.55, ease: "elastic.out(1,0.55)", overwrite: "auto" });
+    }
+  }
+}
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", magnetInit);
+} else {
+  magnetInit();
+}
+})();
+</script>
+
 <script type="module">
 /* ===========================================================================
    The ambience. A fixed WebGL field behind the whole page: sparse violet
@@ -2402,6 +2685,15 @@ if (document.readyState === "loading") {
   geo.setAttribute("aSize", new THREE.BufferAttribute(size, 1));
   geo.setAttribute("aKind", new THREE.BufferAttribute(kind, 1));
 
+  /* caption guard: the motes dim to uCapDim inside (and feathered uCapPad
+     around) every on-screen .caption / figcaption box, so the smallest,
+     dimmest text on the page never sits on a bright mote core. Rects are
+     refreshed every frame in viewport space. */
+  var CAPMAX = 16;
+  var capRects = [];
+  for (var cri = 0; cri < CAPMAX; cri++) capRects.push(new THREE.Vector4(0, 0, 0, 0));
+  var capEls = Array.prototype.slice.call(document.querySelectorAll(".caption, figcaption"));
+
   var uni = {
     uTime:   { value: 0 },
     uScroll: { value: 0 },
@@ -2410,7 +2702,11 @@ if (document.readyState === "loading") {
     uDPR:    { value: DPR },
     uColA:   { value: new THREE.Color("#8B5CF6") },
     uColB:   { value: new THREE.Color("#F97316") },
-    uGain:   { value: 1 }
+    uGain:   { value: 1 },
+    uCapN:   { value: 0 },
+    uCap:    { value: capRects },
+    uCapPad: { value: 80 * DPR },
+    uCapDim: { value: 0.16 }
   };
   var mat = new THREE.ShaderMaterial({
     uniforms: uni,
@@ -2443,6 +2739,9 @@ if (document.readyState === "loading") {
       "varying float vDepth, vTint, vKind;\n" +
       "uniform vec3 uColA, uColB;\n" +
       "uniform float uWarm, uGain;\n" +
+      "uniform int uCapN;\n" +
+      "uniform vec4 uCap[16];\n" +
+      "uniform float uCapPad, uCapDim;\n" +
       "void main(){\n" +
       "  vec2 c = gl_PointCoord - 0.5;\n" +
       "  float d = length(c) * 2.0;\n" +
@@ -2455,7 +2754,15 @@ if (document.readyState === "loading") {
       "  float a = vKind > 0.5\n" +
       "    ? glow * 0.075 * (0.4 + 0.6 * vDepth)\n" +
       "    : (glow * 0.55 + core * 0.4) * (0.30 + 0.70 * vDepth) * 0.62;\n" +
-      "  gl_FragColor = vec4(col + vec3(0.05, 0.04, 0.06) * core * (1.0 - vKind), a * uGain);\n" +
+      "  float capFade = 1.0;\n" +
+      "  for (int i = 0; i < 16; i++) {\n" +
+      "    if (i >= uCapN) break;\n" +
+      "    vec4 r = uCap[i];\n" +
+      "    vec2 d = max(vec2(r.x, r.y) - gl_FragCoord.xy, gl_FragCoord.xy - vec2(r.z, r.w));\n" +
+      "    float dd = max(max(d.x, d.y), 0.0);\n" +
+      "    capFade = min(capFade, mix(uCapDim, 1.0, smoothstep(0.0, uCapPad, dd)));\n" +
+      "  }\n" +
+      "  gl_FragColor = vec4(col + vec3(0.05, 0.04, 0.06) * core * (1.0 - vKind), a * uGain * capFade);\n" +
       "}"
   });
   var pts = new THREE.Points(geo, mat);
@@ -2489,6 +2796,7 @@ if (document.readyState === "loading") {
     DPR = Math.min(window.devicePixelRatio || 1, 2);
     renderer.setPixelRatio(DPR);
     uni.uDPR.value = DPR;
+    uni.uCapPad.value = 80 * DPR;
     renderer.setSize(window.innerWidth, window.innerHeight, false);
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
@@ -2512,6 +2820,15 @@ if (document.readyState === "loading") {
     }
     warm += (target - warm) * 0.035;
     uni.uWarm.value = warm;
+    /* refresh the caption rects in gl coords (origin bottom-left, device px) */
+    var capN = 0, vh2 = window.innerHeight, pad = 80;
+    for (var ci = 0; ci < capEls.length && capN < CAPMAX; ci++) {
+      var cr = capEls[ci].getBoundingClientRect();
+      if (!cr.width || cr.bottom < -pad || cr.top > vh2 + pad) continue;
+      capRects[capN].set(cr.left * DPR, (vh2 - cr.bottom) * DPR, cr.right * DPR, (vh2 - cr.top) * DPR);
+      capN++;
+    }
+    uni.uCapN.value = capN;
     renderer.render(scene, camera);
     if (running) raf = requestAnimationFrame(frame);
   }
