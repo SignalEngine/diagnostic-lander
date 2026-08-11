@@ -194,6 +194,42 @@ figure img{
   border-radius:3px;background:var(--raised);
 }
 figcaption{color:var(--ink-3);font-size:.92rem;max-width:58ch}
+
+/* ---- work: a body of work, so the grid is asymmetric on purpose. One lead
+   plate, a stacked pair with the phone standing beside them, a wide band
+   cropped to its own proportion, then an offset pair. Single column below
+   44rem, where none of that survives contact with the viewport. ---- */
+.work-grid{margin-top:2.5rem;display:grid;gap:clamp(2.5rem,6vw,3.25rem)}
+.work-grid figure{margin:0}
+.work-grid figcaption{max-width:46ch}
+.work-grid figcaption b{
+  display:block;color:var(--ink);font-family:var(--serif);font-weight:400;
+  font-size:clamp(1.1rem,1.02rem + 0.35vw,1.35rem);letter-spacing:-0.012em;
+  line-height:1.2;margin-bottom:.25rem;
+}
+/* the one item that is not a bare plate: a phone screen, matted so it reads
+   as a device rather than a very tall image. */
+.w-phone .shot-panel{
+  background:var(--raised);border:1px solid var(--line);border-radius:3px;
+  padding:clamp(1rem,3.5vw,1.75rem);
+}
+.w-phone img{
+  width:100%;max-width:17rem;height:auto;display:block;margin-inline:auto;
+  border:1px solid var(--line);border-radius:2px;
+}
+@media (min-width:44rem){
+  .work-grid{
+    grid-template-columns:repeat(12,minmax(0,1fr));
+    column-gap:clamp(1.25rem,2.5vw,2rem);row-gap:clamp(2.75rem,5vw,4rem);
+    align-items:start;
+  }
+  .w-lead,.w-band{grid-column:1/-1}
+  .w-engine,.w-launch{grid-column:1/9}
+  .w-phone{grid-column:9/-1;grid-row:span 2}
+  .w-pipe{grid-column:1/8}
+  .w-listing{grid-column:8/-1}
+  .w-phone img{max-width:100%}
+}
 footer{padding-block:3rem 4rem;color:var(--ink-3);font-size:.92rem}
 footer a{color:var(--ink-2)}
 a{color:var(--accent)}
@@ -307,10 +343,84 @@ a{color:var(--accent)}
           <img src="admin.jpg" width="1600" height="891" loading="lazy" decoding="async"
                alt="An operations panel showing running cost per engine, total model calls, and a projection of cost at 1, 10, 50, 100 and 500 engines.">
         </picture>
-        <figcaption>The cost side of the same factory. 17,548 model calls across three running engines, priced per engine, with the projection out to 500. I build the thing that watches what the thing costs — which is how a fixed price stays fixed.</figcaption>
+        <figcaption>An admin panel — the kind of internal tool I build to run a system once it is live.</figcaption>
       </figure>
     </div>
    </div>
+  </section>
+
+  <section class="work">
+    <h2>Work</h2>
+    <p class="lede">Products and internal tools I have designed and built.</p>
+
+    <div class="work-grid">
+
+      <figure class="w-lead">
+        <picture>
+          <source srcset="signalsprint.webp" type="image/webp">
+          <img class="shot" src="signalsprint.jpg" width="1600" height="1000" loading="lazy" decoding="async"
+               alt="The signalsprint.io home page. A dark blue hero headed &quot;The Speed-to-Lead Platform That Gets You There First&quot;, a paragraph of body copy, and two buttons reading &quot;Get Your First HOT Alert&quot; and &quot;How Fast Is Your Team?&quot;, under a navigation bar with Marketing Engine, Free Tools, How It Works, Features, Pricing and Blog.">
+        </picture>
+        <figcaption><b>SignalSprint</b>The marketing site for my own speed-to-lead product.</figcaption>
+      </figure>
+
+      <figure class="w-engine">
+        <picture>
+          <source srcset="signalengine.webp" type="image/webp">
+          <img class="shot" src="signalengine.jpg" width="1500" height="858" loading="lazy" decoding="async"
+               alt="A dark desktop interface with three open windows. Calendar lists Discovery, Email, Proposals, Replies and Skill against an hourly timeline with a Proposals run scheduled at 07:00. Email Lab is a test bench that replays what the engine would reply to a prospect. Video Studio shows a video proposal template marked published.">
+        </picture>
+        <figcaption><b>SignalEngine</b>Outbound engine: a run calendar, a reply test bench, and a proposal template editor, each in its own window.</figcaption>
+      </figure>
+
+      <figure class="w-phone">
+        <div class="shot-panel">
+          <picture>
+            <source srcset="questlifter.webp" type="image/webp">
+            <img src="questlifter.jpg" width="528" height="1280" loading="lazy" decoding="async"
+                 alt="A phone-width dark screen headed QuestLifter. A Training Day card shows Steps at 30 of 8,000, a weekly sessions card shows Full, Upper, Lower and Walking as progress bars reading 1 of 3 done, and below it a Full Body recommendation with buttons to enable campaign play or use just the tracker.">
+          </picture>
+        </div>
+        <figcaption><b>QuestLifter</b>A gym tracker for mobile, with an optional game layer over the training plan.</figcaption>
+      </figure>
+
+      <figure class="w-launch">
+        <picture>
+          <source srcset="launchengine.webp" type="image/webp">
+          <img class="shot" src="launchengine.jpg" width="1500" height="858" loading="lazy" decoding="async"
+               alt="Two windows on a dark desktop. The right one is headed &quot;43 real directories — highest authority first&quot; with cards for planning launch day, Product Hunt and Show HN. The left one, Communities, lists r/SideProject and r/indiehackers with a short reason each and a Strong fit tag.">
+        </picture>
+        <figcaption><b>LaunchEngine</b>A launch tool: submission directories ranked by authority, next to the communities matched to the product.</figcaption>
+      </figure>
+
+      <figure class="w-band">
+        <picture>
+          <source srcset="radar.webp" type="image/webp">
+          <img class="shot" src="radar.jpg" width="1600" height="359" loading="lazy" decoding="async"
+               alt="The top of the Contract Radar screen: a Rescan now button, a POSTED row of time filters from 1h to 7d with 3h selected, a WHERE row of country pills for UK, US, Canada, Australia, Germany, Netherlands and Worldwide, and a message saying nothing matches these filters.">
+        </picture>
+        <figcaption><b>Contract Radar</b>A recruitment tool: contract roles scanned overnight, then filtered by how recently they were posted and where.</figcaption>
+      </figure>
+
+      <figure class="w-pipe">
+        <picture>
+          <source srcset="pipevoice.webp" type="image/webp">
+          <img class="shot" src="pipevoice.jpg" width="1400" height="935" loading="lazy" decoding="async"
+               alt="The PipeVoice settings window on the Voices tab. A Voices card lists the presets Tidy, Social, Professional and Code slash Prompt. An App profiles card maps Terminal, Slack, Cursor or VS Code, and Outlook to those presets.">
+        </picture>
+        <figcaption><b>PipeVoice</b>A Windows voice-typing app: dictation presets, and the rules that map each one to an application.</figcaption>
+      </figure>
+
+      <figure class="w-listing">
+        <picture>
+          <source srcset="listing.webp" type="image/webp">
+          <img class="shot" src="listing.jpg" width="1100" height="656" loading="lazy" decoding="async"
+               alt="A window headed Directory listing showing an In review card that reads &quot;PipeVoice is in the queue. This usually takes 24 hours to go live.&quot; Behind it a Posts window holds a link field containing https://pipevoice.app.">
+        </picture>
+        <figcaption><b>LaunchEngine — submission status</b>The same tool tracking one product through a directory queue.</figcaption>
+      </figure>
+
+    </div>
   </section>
 
   <section>
@@ -834,6 +944,10 @@ function choreograph(){
     gsap.fromTo(".method-steps figure", { opacity: 0, y: 28 }, {
       opacity: 1, y: 0, duration: 0.95, ease: "expo.out",
       scrollTrigger: { trigger: ".method-steps figure", start: "top 90%", once: true }
+    });
+    gsap.fromTo(".work-grid figure", { opacity: 0, y: 26 }, {
+      opacity: 1, y: 0, duration: 0.9, ease: "expo.out", stagger: 0.09,
+      scrollTrigger: { trigger: ".work-grid", start: "top 84%", once: true }
     });
     gsap.fromTo(".offer li", { opacity: 0, x: -16 }, {
       opacity: 1, x: 0, duration: 0.7, ease: "expo.out", stagger: 0.065,
