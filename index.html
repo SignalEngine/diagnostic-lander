@@ -2454,8 +2454,8 @@ if (document.readyState === "loading") {
       "  vec3 col = mix(uColA, uColB, warm);\n" +
       "  float a = vKind > 0.5\n" +
       "    ? glow * 0.075 * (0.4 + 0.6 * vDepth)\n" +
-      "    : (glow * 0.55 + core * 0.65) * (0.30 + 0.70 * vDepth) * 0.9;\n" +
-      "  gl_FragColor = vec4(col + vec3(0.10, 0.08, 0.12) * core * (1.0 - vKind), a * uGain);\n" +
+      "    : (glow * 0.55 + core * 0.4) * (0.30 + 0.70 * vDepth) * 0.62;\n" +
+      "  gl_FragColor = vec4(col + vec3(0.05, 0.04, 0.06) * core * (1.0 - vKind), a * uGain);\n" +
       "}"
   });
   var pts = new THREE.Points(geo, mat);
