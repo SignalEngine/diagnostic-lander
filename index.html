@@ -13,7 +13,7 @@
 <meta property="og:type" content="website">
 <style>
   *,*::before,*::after{box-sizing:border-box}
-  html{-webkit-text-size-adjust:100%}
+  html{-webkit-text-size-adjust:100%;overflow-x:clip}
   body{margin:0}
 </style>
 </head>
@@ -268,7 +268,7 @@ p{margin:0 0 1.1rem;max-width:64ch}
 
 /* sequence layout: one viewport, everything centred and layered */
 .is-seq .hero-stage{
-  height:100svh;position:relative;overflow:clip;
+  height:100svh;position:relative;
   display:grid;
 }
 .is-seq .laptop-area{position:absolute;inset:0;margin:0;display:grid;place-items:center}
