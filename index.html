@@ -1899,12 +1899,16 @@ function choreograph(){
         if (!phone || on === phoneOn) return;
         phoneOn = on;
         if (on) {
-          gsap.to(lap, { opacity: .3, scale: .96, transformOrigin: "50% 100%", duration: .45, ease: "power2.out", overwrite: true });
+          /* The laptop YIELDS entirely. Dimming it to 30% left a full-size
+             empty laptop behind the phone, which read as the phone colliding
+             with it (James's screenshot, 11 Aug). One device on stage at a
+             time. */
+          gsap.to(lap, { autoAlpha: 0, scale: .92, transformOrigin: "50% 100%", duration: .4, ease: "power2.in", overwrite: true });
           gsap.fromTo(phone,
             { autoAlpha: 0, y: 40, scale: .93 },
-            { autoAlpha: 1, y: 0, scale: 1, duration: .55, ease: "expo.out", overwrite: true });
+            { autoAlpha: 1, y: 0, scale: 1, duration: .55, delay: .18, ease: "expo.out", overwrite: true });
         } else {
-          gsap.to(lap, { opacity: 1, scale: 1, duration: .45, ease: "power2.out", overwrite: true });
+          gsap.to(lap, { autoAlpha: 1, scale: 1, duration: .45, delay: .12, ease: "power2.out", overwrite: true });
           gsap.to(phone, { autoAlpha: 0, y: 30, scale: .95, duration: .35, ease: "power2.in", overwrite: true });
         }
       }
