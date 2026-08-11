@@ -65,7 +65,6 @@ body{
   margin:0;background:var(--ground);color:var(--ink);
   font-family:var(--sans);font-size:clamp(1rem,0.95rem + 0.25vw,1.125rem);
   line-height:1.62;-webkit-font-smoothing:antialiased;
-  overflow-x:hidden;
 }
 .wrap{width:min(100% - 2.5rem,62rem);margin-inline:auto}
 @media (max-width:24rem){.wrap{width:calc(100% - 1.75rem)}}
@@ -104,6 +103,29 @@ p{margin:0 0 1.1rem;max-width:64ch}
 .cta:active{transform:scale(.975)}
 .cta:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
 .cta svg{width:1em;height:1em;flex:none}
+
+/* ---- authored assets, drawn in code. No stock, no illustration: a plotted
+   ground and an engraved rule, both generated from geometry at runtime. ---- */
+.hero{position:relative;isolation:isolate}
+.hero > *{position:relative;z-index:1}
+.hero .plot{
+  position:absolute;inset:0;width:100%;height:100%;
+  z-index:0;color:var(--line);pointer-events:none;opacity:.9;
+  -webkit-mask-image:radial-gradient(62% 78% at 50% 30%,#000 0%,#000 10%,transparent 100%);
+  mask-image:radial-gradient(62% 78% at 50% 30%,#000 0%,#000 10%,transparent 100%);
+}
+.rule{display:block;width:100%;height:1.4rem;color:var(--line)}
+.rule--hero{max-width:min(100%,26rem);margin-top:2.6rem}
+.rule--foot{max-width:min(100%,18rem);margin-bottom:1.7rem;opacity:.85}
+
+/* ---- the drawing: units of work moving through the stages, and the share of
+   them that falls through the gaps between. Canvas, one instance, paused
+   when off-screen. ---- */
+.diagram{
+  display:none;position:relative;margin-top:2.4rem;
+  border-block:1px solid var(--line);padding-block:1rem;
+}
+.diagram canvas{display:block;width:100%;height:clamp(11rem,40vw,16.5rem)}
 
 /* ---- the funnel: his real measured numbers, drawn. Not three stat cards. ---- */
 .funnel{margin-top:2.5rem;display:grid;gap:1.4rem}
@@ -147,25 +169,21 @@ details p{padding-bottom:1.3rem;color:var(--ink-2);margin:0;max-width:60ch}
 .terms{border-top:1px solid var(--line);padding-top:1.3rem;display:grid;gap:.5rem;color:var(--ink-3);font-size:.94rem}
 .terms b{color:var(--ink-2);font-weight:600}
 
-/* ---- one authored moment: the sticky sentence that assembles as you pass it.
-   position:sticky is compositor-handled and cannot fight momentum scroll. ---- */
-.method{position:relative}
-.method-sticky{position:sticky;top:0;padding-block:clamp(2.5rem,8vh,4.5rem);background:var(--ground)}
-.method-line{font-family:var(--serif);font-size:clamp(1.6rem,1.1rem + 3vw,3rem);line-height:1.12;max-width:20ch;text-wrap:balance}
-.method-line span{color:var(--ink-3);transition:color .45s cubic-bezier(.16,1,.3,1)}
-.method-steps{display:grid;gap:clamp(3rem,14vh,7rem);padding-block:2rem 30vh}
-.method-step p{color:var(--ink-2);max-width:52ch}
+/* ---- method. The sentence used to be position:sticky over the steps' own
+   column, so the steps scrolled underneath it and collided. It now owns a
+   column of its own above 60rem — nothing can pass through it because nothing
+   shares its track — and below that it is a plain static opener that scrolls
+   away like any other block. ---- */
+.method-grid{display:grid;gap:clamp(2.5rem,7vw,3.25rem)}
+.method-line{font-family:var(--serif);font-size:clamp(1.55rem,1.1rem + 2.6vw,2.6rem);line-height:1.14;max-width:20ch;text-wrap:balance;margin:0}
+.method-line span{color:var(--ink-3)}
+.method-steps{display:grid;gap:clamp(2.5rem,8dvh,4.5rem)}
+.method-step p{color:var(--ink-2);max-width:52ch;margin:0}
 .method-step h3{margin-bottom:.6rem}
-
-/* ---- reveal: visible by DEFAULT, enhanced only where supported. If the
-   animation never runs, the page is already correct. ---- */
-@media (prefers-reduced-motion:no-preference){
-  @supports (animation-timeline:view()){
-    .rise{animation:rise linear both;animation-timeline:view();animation-range:entry 5% cover 26%}
-    @keyframes rise{from{opacity:0;transform:translateY(1.4rem)}to{opacity:1;transform:none}}
-    .bar i{animation:grow linear both;animation-timeline:view();animation-range:entry 10% cover 34%}
-    @keyframes grow{from{transform:scaleX(0)}to{transform:scaleX(var(--w,1))}}
-  }
+@media (min-width:60rem){
+  .method-grid{grid-template-columns:minmax(0,21rem) minmax(0,1fr);gap:clamp(2.5rem,5vw,4.5rem)}
+  .method-sticky{position:sticky;top:clamp(2rem,14dvh,6rem)}
+  .method-steps{padding-bottom:2dvh}
 }
 
 /* The proof is the artefact, so the frame stays quiet: a hairline, the page's
@@ -185,6 +203,7 @@ a{color:var(--accent)}
 <div class="wrap">
 
   <section class="hero">
+    <svg class="plot" data-plot aria-hidden="true" focusable="false"></svg>
     <h1>Your systems are <em>losing you money</em>.</h1>
     <p class="lede">Could be leads going cold. Could be hours lost to admin. Could be jobs nobody follows up. I find exactly where it goes, put a number on it, and tell you what it costs to fix.</p>
     <div class="hero-offer">
@@ -195,11 +214,17 @@ a{color:var(--accent)}
       Book a 15-minute call
       <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M2 8h11M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
     </a>
+    <svg class="rule rule--hero" data-engrave viewBox="0 0 1200 24" preserveAspectRatio="none" aria-hidden="true" focusable="false"></svg>
   </section>
 
-  <section>
+  <section id="proof">
     <h2>What I did for a wellness franchise</h2>
     <p class="lede">129 locations across 23 countries. I rebuilt the path a lead takes from ad click to booked appointment, and measured every step of it.</p>
+
+    <div class="diagram">
+      <canvas id="leak" role="img"
+        aria-label="Work entering from the left and moving through four stages, with a share of it falling through the gaps between the stages and dropping away."></canvas>
+    </div>
 
     <div class="funnel">
       <div class="step rise">
@@ -257,8 +282,11 @@ a{color:var(--accent)}
   </section>
 
   <section class="method">
-    <div class="method-sticky">
-      <p class="method-line">I build it. Not by hand in a text editor — <span>through a software factory I have spent two years building.</span></p>
+   <div class="method-grid">
+    <div class="method-col">
+      <div class="method-sticky">
+        <p class="method-line">I build it. Not by hand in a text editor — <span>through a software factory I have spent two years building.</span></p>
+      </div>
     </div>
     <div class="method-steps">
       <div class="method-step rise">
@@ -282,6 +310,7 @@ a{color:var(--accent)}
         <figcaption>The cost side of the same factory. 17,548 model calls across three running engines, priced per engine, with the projection out to 500. I build the thing that watches what the thing costs — which is how a fixed price stays fixed.</figcaption>
       </figure>
     </div>
+   </div>
   </section>
 
   <section>
@@ -318,27 +347,508 @@ a{color:var(--accent)}
   </section>
 
   <footer>
+    <svg class="rule rule--foot" data-engrave viewBox="0 0 1200 24" preserveAspectRatio="none" aria-hidden="true" focusable="false"></svg>
     James Taylor · Manchester · <a href="mailto:jamesataylor1@gmail.com">jamesataylor1@gmail.com</a> · <a href="tel:+447916991875">+44 7916 991875</a>
   </footer>
 
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/gsap.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/ScrollTrigger.min.js" defer></script>
 <script>
-/* Enhancement only. Everything above is already correct with JS off and with
-   scroll-driven animation unsupported — the reveal classes start visible. */
+/* ---------------------------------------------------------------------------
+   Everything below is enhancement. With JS off, or the CDN blocked, the page
+   is already complete: the hero is static markup, every reveal target starts
+   visible, and the only thing lost is the drawing.
+   --------------------------------------------------------------------------- */
 (function(){
-  if (CSS.supports("animation-timeline: view()")) return;
-  if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-  var els = document.querySelectorAll(".rise");
-  els.forEach(function(el){ el.style.opacity = "0"; el.style.transform = "translateY(1.4rem)"; el.style.transition = "opacity .5s cubic-bezier(.16,1,.3,1), transform .5s cubic-bezier(.16,1,.3,1)"; });
-  var io = new IntersectionObserver(function(entries){
-    entries.forEach(function(e){
-      if (!e.isIntersecting) return;
-      e.target.style.opacity = "1"; e.target.style.transform = "none";
-      io.unobserve(e.target);
+"use strict";
+
+var REDUCE = window.matchMedia("(prefers-reduced-motion: reduce)");
+var root = document.documentElement;
+
+/* deterministic noise — same drawing every load, so a screenshot diff means
+   something and the static frame is reproducible */
+var _s = 987654321;
+function rnd(){ _s = (_s * 1103515245 + 12345) & 0x7fffffff; return _s / 0x7fffffff; }
+
+function tok(name, fallback){
+  var v = getComputedStyle(root).getPropertyValue(name).trim();
+  return v || fallback;
+}
+function rgb(hex){
+  hex = hex.replace("#","");
+  if (hex.length === 3) hex = hex.replace(/./g, "$&$&");
+  var n = parseInt(hex, 16);
+  return (n>>16 & 255) + "," + (n>>8 & 255) + "," + (n & 255);
+}
+
+/* ===========================================================================
+   1. Authored graphic: the plotted ground behind the hero.
+   A surveyor's grid — fine crosses every 30px, a heavier registration mark
+   every 150px. Drawn as SVG patterns, so it is sharp at any density and
+   costs one rect.
+   =========================================================================== */
+(function plot(){
+  var svg = document.querySelector("[data-plot]");
+  if (!svg) return;
+  svg.innerHTML =
+    '<defs>' +
+      '<pattern id="pg-fine" width="30" height="30" patternUnits="userSpaceOnUse">' +
+        '<path d="M15 11.5v7M11.5 15h7" fill="none" stroke="currentColor" stroke-width="1" opacity=".62"/>' +
+      '</pattern>' +
+      '<pattern id="pg-reg" width="150" height="150" patternUnits="userSpaceOnUse">' +
+        '<path d="M15 6v18M6 15h18" fill="none" stroke="currentColor" stroke-width="1"/>' +
+        '<circle cx="15" cy="15" r="4.5" fill="none" stroke="currentColor" stroke-width="1" opacity=".7"/>' +
+      '</pattern>' +
+    '</defs>' +
+    '<rect width="100%" height="100%" fill="url(#pg-fine)"/>' +
+    '<rect width="100%" height="100%" fill="url(#pg-reg)"/>';
+})();
+
+/* ===========================================================================
+   2. Authored graphic: an engraved rule.
+   Three phase-shifted sine curves sampled into paths — the guilloché idea off
+   a banknote, at hairline weight, with one brass lozenge on the centre.
+   =========================================================================== */
+(function engrave(){
+  var nodes = document.querySelectorAll("[data-engrave]");
+  if (!nodes.length) return;
+  var H = 22, MID = H / 2, LAMBDA = 52;   /* one cycle every 52 real px */
+
+  function draw(svg){
+    var W = Math.round(svg.getBoundingClientRect().width);
+    if (!W) return;
+    svg.setAttribute("viewBox", "0 0 " + W + " " + H);
+    var k = (Math.PI * 2) / LAMBDA;
+    var waves = [
+      { a: 4.4, k: k,     p: 0,           o: 0.95 },
+      { a: 4.4, k: k,     p: Math.PI,     o: 0.5  },
+      { a: 1.9, k: k * 3, p: Math.PI / 2, o: 0.38 }
+    ];
+    var m = "";
+    for (var w = 0; w < waves.length; w++) {
+      var s = waves[w], d = "";
+      for (var x = 0; x <= W; x += 3) {
+        d += (x ? "L" : "M") + x + " " + (MID + s.a * Math.sin(x * s.k + s.p)).toFixed(2);
+      }
+      m += '<path d="' + d + '" fill="none" stroke="currentColor" stroke-width="1"' +
+           ' opacity="' + s.o + '"/>';
+    }
+    /* one brass mark on the centre, and a pair of measuring ticks either side */
+    var c = Math.round(W / 2);
+    m += '<path d="M' + c + ' ' + (MID - 4.6) + 'l3.6 4.6-3.6 4.6-3.6-4.6Z" style="fill:var(--accent)"/>' +
+         '<path d="M' + (c - 34) + ' ' + (MID - 7) + 'v14M' + (c + 34) + ' ' + (MID - 7) + 'v14"' +
+         ' stroke="currentColor" stroke-width="1" opacity=".7"/>';
+    svg.innerHTML = m;
+  }
+
+  for (var i = 0; i < nodes.length; i++) {
+    draw(nodes[i]);
+    if ("ResizeObserver" in window) new ResizeObserver(function(es){ draw(es[0].target); }).observe(nodes[i]);
+  }
+})();
+
+/* ===========================================================================
+   3. The drawing. Work enters from the left as discrete units and travels a
+   line through four stages. Between the stages the line has gaps, and a share
+   of the units falls through them and drops away — brass for what makes it,
+   orange for what is lost. The gap widths are the funnel's own measured
+   losses: 43.3% of arrivals at the first, 57.3% of survivors at the second.
+   =========================================================================== */
+var leak = (function(){
+  var cv = document.getElementById("leak");
+  if (!cv || !cv.getContext) return null;
+  var ctx = cv.getContext("2d");
+  if (!ctx) return null;
+  cv.parentNode.style.display = "block";   /* only now is there anything to show */
+
+  var W = 0, H = 0, DPR = 1;
+  var pad = { l: 0, r: 0 }, stageX = [], gapX = [], baseY = 0, band = 0, u = 1;
+  var chTop = 0, chBot = 0, spawnEvery = 0.05;
+  var grid = null, running = false, raf = 0, last = 0, onScreen = false;
+  var units = [], spawnAcc = 0;
+  var C = { accent: "232,163,61", leak: "232,112,61", line: "34,40,53", ink3: "122,131,150" };
+  var wash = 1;   /* leak tints need more weight on a pale ground than a dark one */
+
+  /* share of arrivals lost at each of the three gaps */
+  var LOSS = [0.433, 0.573, 0.13];
+  /* default: fully leaking. Scroll closes it to nothing and reopens it, but if
+     GSAP never loads the drawing still tells the truth. */
+  var st = { open: [1, 1, 1], lit: [1, 1, 1, 1] };
+
+  function readTokens(){
+    C.accent = rgb(tok("--accent", "#E8A33D"));
+    C.leak   = rgb(tok("--leak",   "#E8703D"));
+    C.line   = rgb(tok("--line",   "#222835"));
+    C.ink3   = rgb(tok("--ink-3",  "#7A8396"));
+    var g = rgb(tok("--ground", "#0A0C11")).split(",").map(Number);
+    wash = (0.2126 * g[0] + 0.7152 * g[1] + 0.0722 * g[2]) > 128 ? 2.1 : 1;
+    grid = null;
+  }
+
+  function buildGrid(){
+    var s = Math.round(26 * DPR);
+    var g = document.createElement("canvas");
+    g.width = s; g.height = s;
+    var c = g.getContext("2d");
+    c.strokeStyle = "rgba(" + C.line + ",0.9)";
+    c.lineWidth = Math.max(1, Math.round(DPR * 0.8));
+    var m = Math.round(s / 2) + 0.5, a = 2.5 * DPR;
+    c.beginPath();
+    c.moveTo(m - a, m); c.lineTo(m + a, m);
+    c.moveTo(m, m - a); c.lineTo(m, m + a);
+    c.stroke();
+    grid = ctx.createPattern(g, "repeat");
+  }
+
+  function layout(){
+    var r = cv.getBoundingClientRect();
+    W = Math.max(1, Math.round(r.width));
+    H = Math.max(1, Math.round(r.height));
+    DPR = Math.min(window.devicePixelRatio || 1, 2);
+    cv.width = Math.round(W * DPR);
+    cv.height = Math.round(H * DPR);
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+
+    u = Math.max(0.68, Math.min(1.3, W / 880));
+    pad.l = 12 * u; pad.r = 12 * u;
+    var span = W - pad.l - pad.r;
+    stageX = []; gapX = [];
+    for (var i = 0; i < 4; i++) stageX.push(pad.l + span * (i / 3));
+    for (var j = 0; j < 3; j++) gapX.push((stageX[j] + stageX[j + 1]) / 2);
+    baseY = Math.round(H * 0.31) + 0.5;
+    band = 8.5 * u;
+    chTop = baseY - 13 * u;
+    chBot = baseY + 13 * u;
+    /* keep the units about one every 3px of travel, whatever the width */
+    spawnEvery = Math.max(0.012, 16.8 / W);
+    grid = null;
+  }
+
+  function gapW(i){ return (10 * u + 62 * u * LOSS[i]) * st.open[i]; }
+
+  /* the share of the intake still in the channel after each gap */
+  function share(seg){
+    var s = 1;
+    for (var i = 0; i < seg; i++) s *= 1 - LOSS[i] * st.open[i];
+    return s;
+  }
+
+  function spawn(){
+    units.push({
+      x: -8, y: baseY + (rnd() * 2 - 1) * band,
+      v: (W / 5.6) * (0.82 + rnd() * 0.4),
+      vy: 0, fall: false, a: 1, r: (1.5 + rnd() * 0.95) * u, next: 0
     });
-  }, { rootMargin: "0px 0px -12% 0px" });
-  els.forEach(function(el){ io.observe(el); });
+  }
+
+  function step(dt){
+    spawnAcc += dt;
+    var every = spawnEvery;
+    while (spawnAcc >= every) {
+      spawnAcc -= every;
+      if (units.length < 340) spawn();
+    }
+    for (var i = units.length - 1; i >= 0; i--) {
+      var p = units[i];
+      if (p.fall) {
+        p.vy += 700 * dt;
+        p.y += p.vy * dt;
+        p.x += 9 * dt;
+        p.a -= dt * 0.36;
+        if (p.y > H + 14 || p.a <= 0) units.splice(i, 1);
+        continue;
+      }
+      p.x += p.v * dt;
+      while (p.next < 3 && p.x >= gapX[p.next]) {
+        var passed = rnd() > LOSS[p.next] * st.open[p.next];
+        p.next++;
+        if (!passed) {
+          p.fall = true;
+          p.vy = 10 + rnd() * 30;
+          p.x = gapX[p.next - 1] + (rnd() * 2 - 1) * (gapW(p.next - 1) / 2.6);
+          p.y = chBot + 1.5 * u;
+          break;
+        }
+      }
+      if (!p.fall && p.x > W + 10) units.splice(i, 1);
+    }
+  }
+
+  function paint(){
+    if (!grid) buildGrid();
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(0, 0, cv.width, cv.height);
+    ctx.fillStyle = grid;
+    ctx.fillRect(0, 0, cv.width, cv.height);
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+
+    var i, j, x0, x1;
+    var L = 0, R = W;
+
+    /* where the holes are */
+    var cuts = [];
+    for (j = 0; j < 3; j++) {
+      var g2 = gapW(j);
+      if (g2 > 0.8) cuts.push([gapX[j] - g2 / 2, gapX[j] + g2 / 2, j]);
+    }
+
+    /* the channel, filled a little fainter after every gap it has lost work to.
+       The stream visibly thins from left to right. */
+    var edges = [L, gapX[0], gapX[1], gapX[2], R];
+    for (i = 0; i < 4; i++) {
+      ctx.fillStyle = "rgba(" + C.accent + "," + ((0.03 + 0.115 * share(i)) * wash).toFixed(4) + ")";
+      ctx.fillRect(edges[i], chTop, edges[i + 1] - edges[i], chBot - chTop);
+    }
+
+    /* what falls, and where it goes */
+    for (j = 0; j < cuts.length; j++) {
+      var a = cuts[j][0], b = cuts[j][1], op = st.open[cuts[j][2]];
+      var gr = ctx.createLinearGradient(0, chBot, 0, H);
+      gr.addColorStop(0, "rgba(" + C.leak + "," + (0.16 * op * wash).toFixed(3) + ")");
+      gr.addColorStop(0.65, "rgba(" + C.leak + "," + (0.05 * op * wash).toFixed(3) + ")");
+      gr.addColorStop(1, "rgba(" + C.leak + ",0)");
+      ctx.fillStyle = gr;
+      ctx.beginPath();
+      ctx.moveTo(a, chBot); ctx.lineTo(b, chBot);
+      ctx.lineTo(b + (b - a) * 0.32, H); ctx.lineTo(a - (b - a) * 0.28, H);
+      ctx.closePath(); ctx.fill();
+    }
+
+    /* the rails. The top one is unbroken; the floor is what fails. */
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = "rgba(" + C.ink3 + ",0.45)";
+    ctx.beginPath();
+    ctx.moveTo(L, Math.round(chTop) + 0.5); ctx.lineTo(R, Math.round(chTop) + 0.5);
+    ctx.stroke();
+
+    var fy = Math.round(chBot) + 0.5, cursor = L;
+    ctx.strokeStyle = "rgba(" + C.ink3 + ",0.7)";
+    ctx.beginPath();
+    for (j = 0; j < cuts.length; j++) {
+      if (cuts[j][0] > cursor) { ctx.moveTo(cursor, fy); ctx.lineTo(cuts[j][0], fy); }
+      cursor = Math.max(cursor, cuts[j][1]);
+    }
+    if (cursor < R) { ctx.moveTo(cursor, fy); ctx.lineTo(R, fy); }
+    ctx.stroke();
+
+    /* each broken end turns down and orange — the floor gave way here */
+    ctx.strokeStyle = "rgba(" + C.leak + ",0.9)";
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    for (j = 0; j < cuts.length; j++) {
+      x0 = cuts[j][0]; x1 = cuts[j][1];
+      ctx.moveTo(x0 - 7 * u, fy); ctx.lineTo(x0, fy + 4.5 * u);
+      ctx.moveTo(x1 + 7 * u, fy); ctx.lineTo(x1, fy + 4.5 * u);
+    }
+    ctx.stroke();
+
+    /* the stages */
+    for (i = 0; i < 4; i++) {
+      var lit = st.lit[i], x = Math.round(stageX[i]) + 0.5;
+      var top = chTop - 16 * u, bot = chBot + 8 * u;
+      ctx.strokeStyle = lit > 0.02
+        ? "rgba(" + C.accent + "," + (0.3 + 0.65 * lit).toFixed(3) + ")"
+        : "rgba(" + C.line + ",1)";
+      ctx.lineWidth = lit > 0.5 ? 1.4 : 1;
+      ctx.beginPath();
+      ctx.moveTo(x, top); ctx.lineTo(x, bot);
+      ctx.moveTo(x - 5.5 * u, top); ctx.lineTo(x + 5.5 * u, top);
+      ctx.moveTo(x - 4 * u, bot); ctx.lineTo(x + 4 * u, bot);
+      ctx.stroke();
+      if (lit > 0.02) {
+        ctx.fillStyle = "rgba(" + C.accent + "," + (0.9 * lit).toFixed(3) + ")";
+        ctx.beginPath();
+        ctx.arc(x, top - 4.5 * u, 1.9 * u, 0, 6.2832);
+        ctx.fill();
+      }
+    }
+
+    /* the work itself */
+    var flowing = "rgba(" + C.accent + ",0.92)";
+    for (i = 0; i < units.length; i++) {
+      var p = units[i];
+      ctx.fillStyle = p.fall ? "rgba(" + C.leak + "," + p.a.toFixed(3) + ")" : flowing;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, 6.2832);
+      ctx.fill();
+    }
+
+    /* the floor of the page: everything that fell, gone */
+    var maxOpen = Math.max(st.open[0], st.open[1], st.open[2]);
+    if (maxOpen > 0.02) {
+      ctx.strokeStyle = "rgba(" + C.leak + "," + (0.12 + 0.34 * maxOpen).toFixed(3) + ")";
+      ctx.lineWidth = 1;
+      ctx.setLineDash([3 * u, 5 * u]);
+      ctx.beginPath();
+      ctx.moveTo(L, H - 2.5); ctx.lineTo(R, H - 2.5);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+  }
+
+  function tick(ts){
+    var dt = last ? Math.min((ts - last) / 1000, 0.05) : 0.016;
+    last = ts;
+    step(dt);
+    paint();
+    if (running) raf = requestAnimationFrame(tick);
+  }
+
+  var primed = false;
+  function prime(){
+    if (primed) return;
+    primed = true;
+    for (var k = 0; k < 400; k++) step(1 / 60);
+  }
+  function start(){
+    if (running || REDUCE.matches) return;
+    prime();
+    running = true; last = 0;
+    raf = requestAnimationFrame(tick);
+  }
+  function stop(){
+    running = false;
+    if (raf) cancelAnimationFrame(raf);
+    raf = 0;
+  }
+
+  /* one meaningful still: gaps at full measured width, every stage lit, work
+     mid-flow and mid-fall. No timer, no rAF. */
+  function still(){
+    _s = 987654321;
+    units = [];
+    st.open = [1, 1, 1];
+    st.lit = [1, 1, 1, 1];
+    var n = Math.round((W - pad.l - pad.r) / 3.2);
+    for (var i = 0; i < n; i++) {
+      var x = pad.l + rnd() * (W - pad.l - pad.r);
+      var seg = x < gapX[0] ? 0 : x < gapX[1] ? 1 : x < gapX[2] ? 2 : 3;
+      if (rnd() > [1, 0.567, 0.242, 0.21][seg]) continue;
+      units.push({ x: x, y: baseY + (rnd() * 2 - 1) * band, fall: false, a: 1,
+                   r: (1.5 + rnd() * 0.95) * u, next: seg, v: 0, vy: 0 });
+    }
+    for (var j = 0; j < 3; j++) {
+      var m = Math.round(26 * LOSS[j] * (W / 500));
+      for (var k = 0; k < m; k++) {
+        var d = rnd();
+        units.push({
+          x: gapX[j] + (rnd() * 2 - 1) * (gapW(j) / 2.4) + d * d * 11 * u,
+          y: chBot + 2 * u + d * d * (H - chBot - 6),
+          fall: true, a: 1 - d * 0.55, r: (1.5 + rnd() * 0.95) * u, next: j + 1, v: 0, vy: 0
+        });
+      }
+    }
+    paint();
+  }
+
+  function resize(){
+    layout();
+    if (REDUCE.matches) still(); else paint();
+  }
+
+  function mode(){
+    if (REDUCE.matches) { stop(); still(); }
+    else if (onScreen) start();
+  }
+
+  readTokens();
+  layout();
+  if (REDUCE.matches) still(); else paint();
+
+  if ("IntersectionObserver" in window) {
+    new IntersectionObserver(function(es){
+      onScreen = es[0].isIntersecting;
+      if (onScreen && !REDUCE.matches) start(); else stop();
+    }, { rootMargin: "120px 0px" }).observe(cv);
+  } else { onScreen = true; start(); }
+
+  if ("ResizeObserver" in window) new ResizeObserver(resize).observe(cv);
+  else window.addEventListener("resize", resize);
+
+  document.addEventListener("visibilitychange", function(){
+    if (document.hidden) stop(); else if (onScreen) start();
+  });
+
+  var addL = function(mq, fn){
+    if (mq.addEventListener) mq.addEventListener("change", fn); else mq.addListener(fn);
+  };
+  addL(REDUCE, mode);
+  addL(window.matchMedia("(prefers-color-scheme: dark)"), function(){
+    readTokens();
+    if (REDUCE.matches) still(); else paint();
+  });
+
+  return {
+    /* 0 = the way the owner thinks it works, nothing falls out.
+       1 = the way it measures. Stages light in sequence, then each gap widens
+           to its real share. */
+    progress: function(p){
+      p = p < 0 ? 0 : p > 1 ? 1 : p;
+      var e = function(t){ t = t < 0 ? 0 : t > 1 ? 1 : t; return 1 - Math.pow(2, -9 * t); };
+      for (var i = 0; i < 4; i++) st.lit[i]  = e((p - i * 0.095) / 0.24);
+      for (var j = 0; j < 3; j++) st.open[j] = e((p - 0.20 - j * 0.125) / 0.32);
+      if (!running) paint();
+    }
+  };
+})();
+
+/* ===========================================================================
+   4. Choreography. One scrubbed sequence owns the page: the reader's scroll
+   opens the gaps in the drawing, and the bars underneath answer it. Nothing
+   in the hero moves.
+   =========================================================================== */
+function choreograph(){
+  if (!window.gsap || !window.ScrollTrigger) return;
+  gsap.registerPlugin(ScrollTrigger);
+
+  gsap.matchMedia().add("(prefers-reduced-motion: no-preference)", function(){
+
+    if (leak) {
+      var sync = function(self){ leak.progress(self.progress); };
+      ScrollTrigger.create({
+        trigger: "#proof", start: "top 76%", end: "bottom 58%",
+        scrub: 0.5, onUpdate: sync, onRefresh: sync
+      });
+    }
+
+    gsap.fromTo(".bar i", { scaleX: 0 }, {
+      scaleX: function(i, el){ return parseFloat(el.style.getPropertyValue("--w")) || 1; },
+      transformOrigin: "0% 50%", duration: 1.2, ease: "expo.out", stagger: 0.085,
+      scrollTrigger: { trigger: ".funnel", start: "top 84%", once: true }
+    });
+
+    var span = document.querySelector(".method-line span");
+    if (span) {
+      gsap.fromTo(span,
+        { color: tok("--ink-3", "#7A8396") },
+        { color: tok("--ink", "#ECEAE4"), ease: "none",
+          scrollTrigger: { trigger: ".method", start: "top 74%", end: "top 18%", scrub: 0.6 } });
+    }
+
+    gsap.fromTo(".method-step", { opacity: 0, y: 28 }, {
+      opacity: 1, y: 0, duration: 0.95, ease: "expo.out", stagger: 0.13,
+      scrollTrigger: { trigger: ".method-steps", start: "top 82%", once: true }
+    });
+    gsap.fromTo(".method-steps figure", { opacity: 0, y: 28 }, {
+      opacity: 1, y: 0, duration: 0.95, ease: "expo.out",
+      scrollTrigger: { trigger: ".method-steps figure", start: "top 90%", once: true }
+    });
+    gsap.fromTo(".offer li", { opacity: 0, x: -16 }, {
+      opacity: 1, x: 0, duration: 0.7, ease: "expo.out", stagger: 0.065,
+      scrollTrigger: { trigger: ".offer", start: "top 82%", once: true }
+    });
+  });
+
+  window.addEventListener("load", function(){ ScrollTrigger.refresh(); });
+}
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", choreograph);
+} else {
+  choreograph();
+}
 })();
 </script>
 
