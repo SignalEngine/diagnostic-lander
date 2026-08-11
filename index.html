@@ -450,6 +450,41 @@ figcaption{color:var(--ink-3);font-size:.92rem;max-width:58ch}
 .work-slide{position:absolute;inset:2.6%;opacity:0;visibility:hidden}
 .work-slide picture{position:absolute;inset:0;display:block}
 .work-slide img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;display:block}
+/* ---- the phone: same chrome language as the laptop — violet-tinted dark
+   shell, thin bezel, camera dot. Only JS creates it (inside .work-live), and
+   only for the one product that lives on a phone: it rises in front of the
+   laptop while the laptop dims, then yields back. ---- */
+.phone-frame{display:none}
+.work-live .phone-frame{
+  display:block;position:absolute;left:50%;top:50%;
+  width:clamp(7.5rem,30%,9.5rem);aspect-ratio:9/19.5;
+  transform:translate(-50%,-54%);
+  border-radius:clamp(16px,9%,24px);
+  background:#05060B;border:1px solid #2B3244;
+  box-shadow:
+    0 0 0 2px #0D1017,
+    inset 0 1px 0 rgba(255,255,255,.07),
+    0 24px 48px -16px rgba(0,0,0,.65),
+    0 0 34px -6px rgba(139,92,246,.28);
+  padding:4.5% 4%;
+  z-index:3;opacity:0;visibility:hidden;
+}
+.work-live .phone-frame::before{ /* camera dot */
+  content:"";position:absolute;top:2.1%;left:50%;width:5px;height:5px;
+  transform:translateX(-50%);border-radius:50%;background:#1B2130;z-index:2;
+}
+.ph-screen{
+  position:relative;width:100%;height:100%;overflow:hidden;
+  border-radius:clamp(10px,6%,16px);
+  background:linear-gradient(180deg,var(--scr1),var(--scr2));
+  border:1px solid #1A2030;
+}
+.ph-screen picture{position:absolute;inset:0;display:block}
+.ph-screen img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:top center;display:block;border:0;border-radius:0}
+.ph-screen::after{ /* the same single sheet of glass as the laptop screen */
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(115deg,rgba(255,255,255,.06) 0%,rgba(255,255,255,.015) 30%,transparent 48%);
+}
 .work-live .work-grid{display:block;margin-top:1.9rem}
 .work-live .work-grid figure{min-height:36vh;display:grid;align-content:center;margin:0}
 .work-live .work-grid picture,.work-live .work-grid .shot-panel{display:none}
@@ -763,14 +798,6 @@ a{color:var(--accent-text)}
     <p class="lede">Working systems, not recommendations.</p>
     <p>Every build runs through a software factory two years in the making: each change is checked by something independent before it goes near your business, and nothing is called finished until it is proved running on your live setup. The build itself is always the smallest thing that works end to end, because a small thing running today beats a big thing promised for spring.</p>
     <p>If I am ill or away, other engineers can drive the same factory, so your build keeps moving. You deal with me the whole way through.</p>
-    <figure class="rise">
-      <picture>
-        <source srcset="admin.webp" type="image/webp">
-        <img src="admin.jpg" width="1600" height="891" loading="lazy" decoding="async"
-             alt="An operations panel showing running cost per engine, total model calls, and a projection of cost at 1, 10, 50, 100 and 500 engines.">
-      </picture>
-      <figcaption>An admin panel — the kind of internal tool I build to run a system once it is live.</figcaption>
-    </figure>
   </section>
 
   <section class="work beat">
@@ -1794,7 +1821,9 @@ function choreograph(){
       var slides = figs.map(function(f){
         var d = document.createElement("div");
         d.className = "work-slide";
-        var pic = f.querySelector("picture");
+        /* the phone product never lands on the laptop's screen — its slide
+           stays empty (ambient screen) while the phone takes the stage */
+        var pic = f.classList.contains("w-phone") ? null : f.querySelector("picture");
         if (pic) {
           d.appendChild(pic.cloneNode(true));
           var im = d.querySelector("img");
@@ -1804,7 +1833,45 @@ function choreograph(){
         return d;
       });
 
+      /* the phone: authored chrome (CSS only), the portrait shot clipped on
+         its screen. Hidden until its product's caption arrives. */
+      var phone = null;
+      var phFig = grid.querySelector("figure.w-phone");
+      if (phFig) {
+        phone = document.createElement("div");
+        phone.className = "phone-frame";
+        phone.setAttribute("aria-hidden", "true");
+        var phs = document.createElement("div");
+        phs.className = "ph-screen";
+        var pic2 = phFig.querySelector("picture");
+        if (pic2) {
+          phs.appendChild(pic2.cloneNode(true));
+          var pim = phs.querySelector("img");
+          if (pim) pim.removeAttribute("loading");
+        }
+        phone.appendChild(phs);
+        stage.appendChild(phone);
+      }
+
       workSec.classList.add("work-live");
+
+      /* choreography: the phone rises in front of the laptop while the
+         laptop dims and settles back a step; leaving the phone product
+         reverses both, and the next screenshot lands on the laptop. */
+      var phoneOn = false;
+      function setPhone(on){
+        if (!phone || on === phoneOn) return;
+        phoneOn = on;
+        if (on) {
+          gsap.to(lap, { opacity: .3, scale: .96, transformOrigin: "50% 100%", duration: .45, ease: "power2.out", overwrite: true });
+          gsap.fromTo(phone,
+            { autoAlpha: 0, y: 40, scale: .93 },
+            { autoAlpha: 1, y: 0, scale: 1, duration: .55, ease: "expo.out", overwrite: true });
+        } else {
+          gsap.to(lap, { opacity: 1, scale: 1, duration: .45, ease: "power2.out", overwrite: true });
+          gsap.to(phone, { autoAlpha: 0, y: 30, scale: .95, duration: .35, ease: "power2.in", overwrite: true });
+        }
+      }
 
       var cur = -1;
       function activate(i){
@@ -1817,6 +1884,7 @@ function choreograph(){
         gsap.fromTo(slides[i],
           { autoAlpha: 0, xPercent: 11 * dir },
           { autoAlpha: 1, xPercent: 0, duration: .5, ease: "expo.out", overwrite: true });
+        setPhone(figs[i].classList.contains("w-phone"));
       }
       figs.forEach(function(f, i){
         ScrollTrigger.create({
@@ -1840,13 +1908,111 @@ function choreograph(){
         ScrollTrigger.refresh();
       }, 400);
     }
+    /* the six case-file icons draw themselves on as the section scrolls in
+       (stroke dashoffset, staggered), then take turns at a small idle
+       gesture — one icon at a time, never the whole row. From-states are
+       JS-only: with no script the icons are simply there, fully stroked. */
+    (function suspectIcons(){
+      var svgs = gsap.utils.toArray(".trades summary .t-icon svg");
+      if (!svgs.length) return;
+      var shapes = [];
+      svgs.forEach(function(sv){
+        var arr = [];
+        sv.querySelectorAll("path,circle,rect,line").forEach(function(g){
+          var len = 0;
+          try { len = g.getTotalLength(); } catch(e){}
+          if (!len) return;
+          gsap.set(g, { strokeDasharray: len + " " + len, strokeDashoffset: len });
+          arr.push(g);
+        });
+        shapes.push(arr);
+      });
+      var mi = 0;
+      function micro(){
+        var idx = mi; mi = (mi + 1) % svgs.length;
+        var sv = svgs[idx];
+        var tl2 = gsap.timeline({ onComplete: function(){ gsap.delayedCall(2.8, micro); } });
+        if (idx === 1) { /* the megaphone tilts up and settles */
+          tl2.to(sv, { rotation: -8, transformOrigin: "40% 60%", duration: .32, ease: "power2.out" })
+             .to(sv, { rotation: 0, duration: .8, ease: "elastic.out(1,0.45)" });
+        } else if (idx === 4) { /* the clinic cross pulses gently */
+          var cross = sv.querySelector("path");
+          tl2.to(cross, { scale: 1.18, transformOrigin: "50% 50%", duration: .38, ease: "power2.out" })
+             .to(cross, { scale: 1, duration: .6, ease: "power2.inOut" });
+        } else { /* the rest nod: a small tilt and an elastic settle */
+          tl2.to(sv, { rotation: idx % 2 ? 4 : -4, transformOrigin: "50% 50%", duration: .4, ease: "power1.inOut" })
+             .to(sv, { rotation: 0, duration: .7, ease: "elastic.out(1,0.55)" });
+        }
+      }
+      var drawTl = gsap.timeline({
+        scrollTrigger: { trigger: ".trades", start: "top 82%", once: true },
+        onComplete: function(){ gsap.delayedCall(1.6, micro); }
+      });
+      shapes.forEach(function(arr, i){
+        if (arr.length) drawTl.to(arr, { strokeDashoffset: 0, duration: .7, ease: "power1.inOut" }, i * 0.14);
+      });
+    })();
+
+    /* opening a case file types its entry on, word by word, with the same
+       caret the report uses — once per entry per page load. The text is
+       replaced under an aria-hidden live layer with a visually-hidden full
+       copy for screen readers, and restored to plain text when it finishes;
+       word spans hold their space, so the folder never changes height
+       mid-type. With no script the entries are plain, fully visible text. */
+    function typeEntry(p){
+      var text = p.textContent;
+      var sr3 = document.createElement("span");
+      sr3.className = "sr-only"; sr3.textContent = text;
+      var live = document.createElement("span");
+      live.className = "type-line"; live.setAttribute("aria-hidden", "true");
+      var ws = [], parts = text.split(/(\s+)/), i;
+      for (i = 0; i < parts.length; i++) {
+        if (!parts[i]) continue;
+        if (/^\s+$/.test(parts[i])) { live.appendChild(document.createTextNode(parts[i])); continue; }
+        var w = document.createElement("span");
+        w.className = "word"; w.textContent = parts[i];
+        w.style.visibility = "hidden";
+        live.appendChild(w); ws.push(w);
+      }
+      if (!ws.length) return;
+      var restore = function(){ p.textContent = text; };
+      typeRestores.push(restore);
+      p.textContent = "";
+      p.appendChild(sr3); p.appendChild(live);
+      p.style.position = "relative";
+      var caret = document.createElement("i");
+      caret.className = "type-caret"; caret.setAttribute("aria-hidden", "true");
+      p.appendChild(caret);
+      function placeCaret(tip){
+        var hr3 = p.getBoundingClientRect(), tr = tip.getBoundingClientRect();
+        caret.style.left = (tr.right - hr3.left + 1) + "px";
+        caret.style.top = (tr.top - hr3.top + tr.height * 0.08) + "px";
+        caret.style.height = (tr.height * 0.84) + "px";
+      }
+      placeCaret(ws[0]);
+      var proxy = { n: 0 };
+      gsap.to(proxy, {
+        n: ws.length, ease: "none",
+        duration: Math.max(.7, ws.length * 0.045),
+        onUpdate: function(){
+          var upto = Math.round(proxy.n);
+          for (var k = 0; k < ws.length; k++)
+            ws[k].style.visibility = k < upto ? "visible" : "hidden";
+          if (upto > 0) placeCaret(ws[Math.min(upto, ws.length) - 1]);
+        },
+        onComplete: restore
+      });
+    }
     document.querySelectorAll(".trades details").forEach(function(d){
       var body2 = d.querySelector("p");
       if (!body2) return;
       d.addEventListener("toggle", function(){
-        if (d.open) gsap.fromTo(body2,
-          { rotationX: -55, autoAlpha: 0, y: -6 },
-          { rotationX: 0, autoAlpha: 1, y: 0, duration: .3, ease: "expo.out", overwrite: true });
+        if (d.open) {
+          gsap.fromTo(body2,
+            { rotationX: -55, autoAlpha: 0, y: -6 },
+            { rotationX: 0, autoAlpha: 1, y: 0, duration: .3, ease: "expo.out", overwrite: true });
+          if (!d._typed) { d._typed = true; typeEntry(body2); }
+        }
         relayout();
       });
     });
