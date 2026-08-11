@@ -20,9 +20,11 @@
 <body>
 
 <script>
-/* Runs synchronously before first paint: when JS is on, the very first
-   painted frame is already the sequence start state (closed laptop + cue).
-   With JS off this never runs and the complete static hero renders. If the
+/* Runs synchronously before first paint: .seq switches the hero to the
+   pinned one-viewport stage and shows the scroll cue. The first painted
+   frame is the SAME thing either way — the full-screen hero copy at
+   scale 1 — which is the point of the inverted sequence. With JS off this
+   never runs and the static hero (copy only, no laptop) renders. If the
    GSAP CDN fails, choreograph() removes the class and the static hero
    returns. */
 document.documentElement.classList.add("seq");
@@ -149,10 +151,12 @@ p{margin:0 0 1.1rem;max-width:64ch}
 .cta--ghost:focus-visible{outline-color:var(--accent)}
 
 /* ================= hero =================
-   Static truth first: with no script this is an open laptop — the page
-   itself miniature on its screen — under the complete offer. The scroll
-   sequence is layered on by a pre-paint inline script adding .seq
-   to the root element, so the static layout never paints when JS runs. */
+   The first frame IS the offer: the real hero copy, full screen, at
+   raster scale 1. Scrolling zooms OUT — the copy shrinks (one wrapper
+   transform, only ever downward) and is revealed to be on a laptop's
+   screen as the chrome fades and converges rigidly around it; then the
+   lid closes over it and the spine takes the page. With no script the
+   page is the same first frame, statically, with no laptop at all. */
 .hero{position:relative;isolation:isolate;padding-block:clamp(3rem,9vw,6.5rem) clamp(2.5rem,6vw,4.5rem)}
 .hero > *{position:relative;z-index:1}
 .hero .plot{
@@ -171,24 +175,23 @@ p{margin:0 0 1.1rem;max-width:64ch}
 .hero-offer .price{font-size:clamp(1.5rem,1.2rem + 1.4vw,2.1rem);color:var(--ink);letter-spacing:-0.04em}
 .hero-offer .what{color:var(--ink-2);font-size:0.98rem}
 
-/* ---- the laptop, drawn in CSS 3D. Bezel, deck, hinge, nothing stock. ---- */
-.laptop-area{margin-top:clamp(2.5rem,6vw,4rem);display:grid;justify-items:center;position:relative}
+/* ---- the laptop. The lid is CSS (it carries live DOM on its screen
+   through a real 3D close); the deck is drawn SVG with its perspective
+   baked in — seen from slightly above, the front edge is the widest,
+   key rows foreshorten toward the hinge, trackpad centred below. ---- */
+.laptop-area{display:none}
 .zoom{will-change:transform}
-.lid,.deck{will-change:transform}
+.lid{will-change:transform}
 .scene{perspective:1500px;perspective-origin:50% 26%}
-.laptop{
-  position:relative;width:min(30rem,80vw);
-  transform-style:preserve-3d;transform:rotateX(4deg);
-}
+.laptop{position:relative;width:min(30rem,80vw)}
 .lid{
   position:relative;width:100%;aspect-ratio:16/10.4;
   transform-style:preserve-3d;transform-origin:50% 100%;
-  transform:rotateX(-10deg);
 }
 .screen{
   position:absolute;inset:0;border-radius:14px 14px 4px 4px;
   background:#05060B;border:1px solid #2B3244;
-  box-shadow:0 0 0 2px #0D1017,0 34px 90px -24px rgba(0,0,0,.75);
+  box-shadow:0 0 0 2px #0D1017,inset 0 1px 0 rgba(255,255,255,.07);
   padding:4.4% 3.6% 5.2%;
   backface-visibility:hidden;-webkit-backface-visibility:hidden;
 }
@@ -203,28 +206,9 @@ p{margin:0 0 1.1rem;max-width:64ch}
     linear-gradient(180deg,var(--scr1),var(--scr2));
   border:1px solid #1A2030;
 }
-/* the real hero copy, as a miniature on the screen face. Sized in container
-   units so it scales with the laptop through the whole 3D sequence. While
-   small it only has to be recognisably THE page; the full-screen hero-copy
-   layer takes over for the readable state. */
-.screen-ui{container-type:size}
-.mini{
-  position:absolute;inset:0;display:grid;align-content:center;justify-items:center;
-  text-align:center;row-gap:5cqh;padding:5cqh 7cqw;
-}
-.mini p{margin:0;max-width:none}
-.mini-h{font-family:var(--serif);font-style:italic;font-weight:400;font-size:8.4cqw;line-height:1.05;letter-spacing:-0.012em;color:var(--ink);text-wrap:balance}
-.mini-h .q{color:var(--accent-text);font-style:normal}
-.mini-lede{font-size:3.1cqw;line-height:1.42;color:var(--ink-2);max-width:80cqw}
-.mini-offer{display:flex;flex-wrap:wrap;justify-content:center;align-items:baseline;gap:1cqh 2.6cqw;
-  padding-top:2.4cqh;border-top:1px solid color-mix(in srgb,var(--line) 70%,transparent)}
-.mini-offer .price{font-size:4.8cqw;color:var(--ink);letter-spacing:-0.04em}
-.mini-offer .what{font-size:2.5cqw;color:var(--ink-2)}
-.mini-cta{
-  display:inline-block;padding:2cqh 4.4cqw;border-radius:2.2cqw;
-  background:linear-gradient(180deg,var(--btn-hi),var(--btn));color:var(--btn-ink);
-  font-size:3cqw;font-weight:660;letter-spacing:-0.005em;
-  border:1px solid color-mix(in srgb,var(--btn-edge) 55%,transparent);
+.screen-ui::after{ /* one soft sheet of glass reflection */
+  content:"";position:absolute;inset:0;pointer-events:none;z-index:5;
+  background:linear-gradient(115deg,rgba(255,255,255,.05) 0%,rgba(255,255,255,.015) 26%,transparent 44%);
 }
 .lid-back{
   position:absolute;inset:0;border-radius:14px 14px 4px 4px;
@@ -245,31 +229,11 @@ p{margin:0 0 1.1rem;max-width:64ch}
   background:linear-gradient(180deg,#2A3040,#141823);
   border-radius:2px;box-shadow:0 1px 0 rgba(0,0,0,.5);
 }
-.deck{
-  position:relative;width:104%;left:-2%;height:calc(min(30rem,80vw) * .44);
-  transform:rotateX(-74deg);transform-origin:50% 0%;
-  background:linear-gradient(180deg,#1B2130 0%,#151A26 70%,#12161F 100%);
-  border:1px solid #2B3244;border-top-color:#39415A;
-  border-radius:4px 4px 18px 18px;
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.05);
-}
-.keys{
-  position:absolute;left:7%;right:7%;top:7%;height:52%;border-radius:5px;
-  background:
-    repeating-linear-gradient(90deg,transparent 0,transparent calc(100%/14 - 3px),#151A26 calc(100%/14 - 3px),#151A26 calc(100%/14)),
-    repeating-linear-gradient(0deg,transparent 0,transparent calc(100%/5 - 3px),#151A26 calc(100%/5 - 3px),#151A26 calc(100%/5)),
-    linear-gradient(180deg,#202635,#1A1F2D);
-  border:1px solid #262D3F;
-}
-.trackpad{
-  position:absolute;left:36%;right:36%;bottom:9%;height:26%;
-  border-radius:7px;border:1px solid #2B3244;
-  background:linear-gradient(180deg,#181D2A,#141926);
-}
+.deck{position:relative;display:block;width:104%;left:-2%;height:auto}
 .lap-shadow{
-  position:absolute;left:6%;right:6%;bottom:-9%;height:14%;
-  background:radial-gradient(50% 50% at 50% 50%,rgba(0,0,0,.55),transparent 70%);
-  filter:blur(6px);z-index:-1;
+  position:absolute;left:4%;right:4%;bottom:-7%;height:14%;
+  background:radial-gradient(50% 50% at 50% 50%,rgba(0,0,0,.6),transparent 70%);
+  filter:blur(7px);z-index:-1;
 }
 
 /* the scroll cue — a drawn mouse with a rolling wheel, top of the first
@@ -297,37 +261,30 @@ p{margin:0 0 1.1rem;max-width:64ch}
   55%{transform:translateY(4px);opacity:1}
 }
 
-/* sequence layout: one viewport, everything centred and layered */
-.seq .hero-stage{
-  height:100svh;position:relative;
-  display:grid;
-}
-.seq .laptop-area{position:absolute;inset:0;margin:0;display:grid;place-items:center}
-.screen-full{
-  display:none;position:absolute;top:0;bottom:0;left:50%;width:100vw;
-  transform:translateX(-50%);z-index:2;opacity:0;pointer-events:none;
-  background:
-    radial-gradient(120% 90% at 50% 118%,rgba(139,92,246,.3),rgba(139,92,246,.05) 55%,transparent 75%),
-    linear-gradient(180deg,var(--scr1),var(--scr2));
-}
-.seq .screen-full{display:block}
-.seq .hero-copy{
-  position:absolute;inset:0;z-index:3;
+/* sequence layout: one pinned viewport. The copy and the chrome live in
+   ONE transform wrapper (.shrink): the copy sits in it at scale 1, the
+   chrome carries the exact INVERSE of the landing transform, so a single
+   wrapper tween shrinks the copy onto the laptop's screen while the
+   chrome converges rigidly to its resting size — one continuous
+   transform, text only ever scales DOWN, never a crossfade of copies. */
+.hero-stage{min-height:86svh;display:grid;align-items:center}
+.hero-copy{
   display:grid;align-content:center;justify-items:center;text-align:center;
   padding-inline:clamp(1rem,4vw,3rem);
 }
-.seq .hero-copy .lede{margin-inline:auto}
-.seq .hero-offer{justify-content:center;border-top-color:color-mix(in srgb,var(--line) 70%,transparent)}
-/* start state before GSAP takes over: lid shut, full copy not painted.
-   Structural, not an opacity mask — with JS on the static hero never
-   paints at all. */
-.seq .lid{transform:rotateX(-84deg)}
-.seq .hero-copy{opacity:0;visibility:hidden}
-/* in the sequence the screen shows a true scaled clone of the hero copy
-   (same width, same styles, so identical line wrapping) — the crossfade
-   partner can then be laid exactly over it. The cqw miniature stays for
-   the no-JS static page. */
-.seq .screen-ui .mini{display:none}
+.hero-copy .lede{margin-inline:auto}
+.hero-copy .hero-offer{justify-content:center;border-top-color:color-mix(in srgb,var(--line) 70%,transparent)}
+.seq .hero-stage{height:100svh;position:relative}
+.seq .shrink{position:absolute;inset:0;will-change:transform}
+.seq .hero-copy{position:absolute;inset:0;z-index:3}
+.seq .laptop-area{
+  display:grid;position:absolute;inset:0;margin:0;place-items:center;
+  opacity:0; /* GSAP fades the chrome in around the shrinking copy */
+}
+/* the copy that rides the laptop's screen through the close: a clone with
+   the hero copy's width (identical wrapping), scaled to fit the screen
+   face. Swapped in at ONE frame at measured-identical geometry — no
+   crossfade window, no ghost. Hidden until that frame. */
 .screen-copy{
   position:absolute;left:50%;top:50%;
   display:grid;justify-items:center;text-align:center;
@@ -472,42 +429,138 @@ a{color:var(--accent-text)}
   <header class="hero" id="top">
     <svg class="plot" data-plot aria-hidden="true" focusable="false"></svg>
     <div class="hero-stage">
-      <div class="screen-full" aria-hidden="true"></div>
-      <div class="hero-copy">
-        <h1 class="hc"><span class="q">“</span>That’s just how we do&nbsp;it.<span class="q">”</span></h1>
-        <p class="lede hc">The most expensive sentence in any business. I find the steps you’ve stopped seeing, put a number on what they cost, and fix them.</p>
-        <div class="hero-offer hc">
-          <span class="price num">£1,500</span>
-          <span class="what">fixed price · one page you can act on · five working days from access</span>
+      <div class="shrink">
+        <div class="hero-copy">
+          <h1 class="hc"><span class="q">“</span>That’s just how we do&nbsp;it.<span class="q">”</span></h1>
+          <p class="lede hc">The most expensive sentence in any business. I find the steps you’ve stopped seeing, put a number on what they cost, and fix them.</p>
+          <div class="hero-offer hc">
+            <span class="price num">£1,500</span>
+            <span class="what">fixed price · one page you can act on · five working days from access</span>
+          </div>
+          <a class="cta hc" href="#book">
+            Book a 15-minute call
+            <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M2 8h11M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </a>
         </div>
-        <a class="cta hc" href="#book">
-          Book a 15-minute call
-          <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M2 8h11M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        </a>
-      </div>
-      <div class="laptop-area" aria-hidden="true">
-        <div class="zoom">
-          <div class="scene">
-            <div class="laptop">
-              <div class="lid">
-                <div class="screen">
-                  <div class="screen-ui">
-                    <div class="mini">
-                      <p class="mini-h"><span class="q">“</span>That’s just how we do&nbsp;it.<span class="q">”</span></p>
-                      <p class="mini-lede">The most expensive sentence in any business. I find the steps you’ve stopped seeing, put a number on what they cost, and fix them.</p>
-                      <p class="mini-offer"><span class="price num">£1,500</span><span class="what">fixed price · one page you can act on · five working days from access</span></p>
-                      <span class="mini-cta">Book a 15-minute call</span>
-                    </div>
+        <div class="laptop-area" aria-hidden="true">
+          <div class="zoom">
+            <div class="scene">
+              <div class="laptop">
+                <div class="lid">
+                  <div class="screen">
+                    <div class="screen-ui"></div>
                   </div>
+                  <div class="lid-back"><i class="lb-mark"></i></div>
                 </div>
-                <div class="lid-back"><i class="lb-mark"></i></div>
+                <div class="hinge"></div>
+                <svg class="deck" viewBox="0 0 1040 320" aria-hidden="true" focusable="false">
+                <defs>
+                <linearGradient id="dsurf" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0" stop-color="#222939"/><stop offset=".45" stop-color="#1A2030"/><stop offset="1" stop-color="#141926"/>
+                </linearGradient>
+                <linearGradient id="dlip" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0" stop-color="#252C3E"/><stop offset=".25" stop-color="#141826"/><stop offset="1" stop-color="#0B0E16"/>
+                </linearGradient>
+                <linearGradient id="kf" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0" stop-color="#2A3245"/><stop offset=".28" stop-color="#232A3C"/><stop offset="1" stop-color="#1D2333"/>
+                </linearGradient>
+                <linearGradient id="tp" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0" stop-color="#1B2130"/><stop offset="1" stop-color="#151A28"/>
+                </linearGradient>
+                <radialGradient id="spill" cx=".5" cy="0" r="1">
+                  <stop offset="0" stop-color="rgba(139,92,246,.14)"/><stop offset=".55" stop-color="rgba(139,92,246,.04)"/><stop offset="1" stop-color="rgba(139,92,246,0)"/>
+                </radialGradient>
+                </defs>
+                <path d="M2 246 L1038 246 L1040 268 Q1040 290 1014 290 L26 290 Q0 290 0 268 Z" fill="url(#dlip)"/>
+                <path d="M20 2 L1020 2 L1038 244 Q1040 262 1020 262 L20 262 Q0 262 2 244 Z" fill="url(#dsurf)" stroke="#2B3244" stroke-width="1"/>
+                <path d="M20 2 L1020 2 L1030 132 L10 132 Z" fill="url(#spill)"/>
+                <path d="M22 2.6 L1018 2.6" stroke="#3E4863" stroke-width="1.6" opacity=".9" fill="none"/>
+                <path d="M22 4.4 L1018 4.4" stroke="rgba(255,255,255,.05)" stroke-width="1" fill="none"/>
+                <path d="M6 260 L1034 260" stroke="#39415A" stroke-width="1" opacity=".55" fill="none"/>
+                <g opacity=".92">
+                <rect x="151.9" y="22.0" width="48.8" height="16.0" rx="2.6" fill="url(#kf)"/>
+                <rect x="204.8" y="22.0" width="48.8" height="16.0" rx="2.6" fill="url(#kf)"/>
+                <rect x="257.7" y="22.0" width="48.8" height="16.0" rx="2.6" fill="url(#kf)"/>
+                <rect x="310.6" y="22.0" width="48.8" height="16.0" rx="2.6" fill="url(#kf)"/>
+                <rect x="363.4" y="22.0" width="48.8" height="16.0" rx="2.6" fill="url(#kf)"/>
+                <rect x="416.3" y="22.0" width="48.8" height="16.0" rx="2.6" fill="url(#kf)"/>
+                <rect x="469.2" y="22.0" width="48.8" height="16.0" rx="2.6" fill="url(#kf)"/>
+                <rect x="522.1" y="22.0" width="48.8" height="16.0" rx="2.6" fill="url(#kf)"/>
+                <rect x="574.9" y="22.0" width="48.8" height="16.0" rx="2.6" fill="url(#kf)"/>
+                <rect x="627.8" y="22.0" width="48.8" height="16.0" rx="2.6" fill="url(#kf)"/>
+                <rect x="680.7" y="22.0" width="48.8" height="16.0" rx="2.6" fill="url(#kf)"/>
+                <rect x="733.5" y="22.0" width="48.8" height="16.0" rx="2.6" fill="url(#kf)"/>
+                <rect x="786.4" y="22.0" width="48.8" height="16.0" rx="2.6" fill="url(#kf)"/>
+                <rect x="839.3" y="22.0" width="48.8" height="16.0" rx="2.6" fill="url(#kf)"/>
+                <rect x="146.5" y="42.0" width="49.3" height="18.5" rx="3.1" fill="url(#kf)"/>
+                <rect x="200.1" y="42.0" width="49.3" height="18.5" rx="3.1" fill="url(#kf)"/>
+                <rect x="253.8" y="42.0" width="49.3" height="18.5" rx="3.1" fill="url(#kf)"/>
+                <rect x="307.5" y="42.0" width="49.3" height="18.5" rx="3.1" fill="url(#kf)"/>
+                <rect x="361.2" y="42.0" width="49.3" height="18.5" rx="3.1" fill="url(#kf)"/>
+                <rect x="414.8" y="42.0" width="49.3" height="18.5" rx="3.1" fill="url(#kf)"/>
+                <rect x="468.5" y="42.0" width="49.3" height="18.5" rx="3.1" fill="url(#kf)"/>
+                <rect x="522.2" y="42.0" width="49.3" height="18.5" rx="3.1" fill="url(#kf)"/>
+                <rect x="575.9" y="42.0" width="49.3" height="18.5" rx="3.1" fill="url(#kf)"/>
+                <rect x="629.6" y="42.0" width="49.3" height="18.5" rx="3.1" fill="url(#kf)"/>
+                <rect x="683.2" y="42.0" width="49.3" height="18.5" rx="3.1" fill="url(#kf)"/>
+                <rect x="736.9" y="42.0" width="49.3" height="18.5" rx="3.1" fill="url(#kf)"/>
+                <rect x="790.6" y="42.0" width="49.3" height="18.5" rx="3.1" fill="url(#kf)"/>
+                <rect x="844.3" y="42.0" width="49.3" height="18.5" rx="3.1" fill="url(#kf)"/>
+                <rect x="140.3" y="64.5" width="49.9" height="21.5" rx="3.6" fill="url(#kf)"/>
+                <rect x="194.9" y="64.5" width="49.9" height="21.5" rx="3.6" fill="url(#kf)"/>
+                <rect x="249.4" y="64.5" width="49.9" height="21.5" rx="3.6" fill="url(#kf)"/>
+                <rect x="304.0" y="64.5" width="49.9" height="21.5" rx="3.6" fill="url(#kf)"/>
+                <rect x="358.6" y="64.5" width="49.9" height="21.5" rx="3.6" fill="url(#kf)"/>
+                <rect x="413.2" y="64.5" width="49.9" height="21.5" rx="3.6" fill="url(#kf)"/>
+                <rect x="467.8" y="64.5" width="49.9" height="21.5" rx="3.6" fill="url(#kf)"/>
+                <rect x="522.4" y="64.5" width="49.9" height="21.5" rx="3.6" fill="url(#kf)"/>
+                <rect x="576.9" y="64.5" width="49.9" height="21.5" rx="3.6" fill="url(#kf)"/>
+                <rect x="631.5" y="64.5" width="49.9" height="21.5" rx="3.6" fill="url(#kf)"/>
+                <rect x="686.1" y="64.5" width="49.9" height="21.5" rx="3.6" fill="url(#kf)"/>
+                <rect x="740.7" y="64.5" width="49.9" height="21.5" rx="3.6" fill="url(#kf)"/>
+                <rect x="795.3" y="64.5" width="49.9" height="21.5" rx="3.6" fill="url(#kf)"/>
+                <rect x="849.9" y="64.5" width="49.9" height="21.5" rx="3.6" fill="url(#kf)"/>
+                <rect x="133.3" y="90.0" width="50.5" height="25.0" rx="4.1" fill="url(#kf)"/>
+                <rect x="188.9" y="90.0" width="50.5" height="25.0" rx="4.1" fill="url(#kf)"/>
+                <rect x="244.5" y="90.0" width="50.5" height="25.0" rx="4.1" fill="url(#kf)"/>
+                <rect x="300.1" y="90.0" width="50.5" height="25.0" rx="4.1" fill="url(#kf)"/>
+                <rect x="355.7" y="90.0" width="50.5" height="25.0" rx="4.1" fill="url(#kf)"/>
+                <rect x="411.3" y="90.0" width="50.5" height="25.0" rx="4.1" fill="url(#kf)"/>
+                <rect x="466.9" y="90.0" width="50.5" height="25.0" rx="4.1" fill="url(#kf)"/>
+                <rect x="522.5" y="90.0" width="50.5" height="25.0" rx="4.1" fill="url(#kf)"/>
+                <rect x="578.2" y="90.0" width="50.5" height="25.0" rx="4.1" fill="url(#kf)"/>
+                <rect x="633.8" y="90.0" width="50.5" height="25.0" rx="4.1" fill="url(#kf)"/>
+                <rect x="689.4" y="90.0" width="50.5" height="25.0" rx="4.1" fill="url(#kf)"/>
+                <rect x="745.0" y="90.0" width="50.5" height="25.0" rx="4.1" fill="url(#kf)"/>
+                <rect x="800.6" y="90.0" width="50.5" height="25.0" rx="4.1" fill="url(#kf)"/>
+                <rect x="856.2" y="90.0" width="50.5" height="25.0" rx="4.1" fill="url(#kf)"/>
+                <rect x="125.3" y="119.0" width="51.3" height="29.0" rx="4.6" fill="url(#kf)"/>
+                <rect x="182.1" y="119.0" width="51.3" height="29.0" rx="4.6" fill="url(#kf)"/>
+                <rect x="238.8" y="119.0" width="51.3" height="29.0" rx="4.6" fill="url(#kf)"/>
+                <rect x="295.6" y="119.0" width="51.3" height="29.0" rx="4.6" fill="url(#kf)"/>
+                <rect x="352.4" y="119.0" width="51.3" height="29.0" rx="4.6" fill="url(#kf)"/>
+                <rect x="409.2" y="119.0" width="51.3" height="29.0" rx="4.6" fill="url(#kf)"/>
+                <rect x="466.0" y="119.0" width="51.3" height="29.0" rx="4.6" fill="url(#kf)"/>
+                <rect x="522.8" y="119.0" width="51.3" height="29.0" rx="4.6" fill="url(#kf)"/>
+                <rect x="579.5" y="119.0" width="51.3" height="29.0" rx="4.6" fill="url(#kf)"/>
+                <rect x="636.3" y="119.0" width="51.3" height="29.0" rx="4.6" fill="url(#kf)"/>
+                <rect x="693.1" y="119.0" width="51.3" height="29.0" rx="4.6" fill="url(#kf)"/>
+                <rect x="749.9" y="119.0" width="51.3" height="29.0" rx="4.6" fill="url(#kf)"/>
+                <rect x="806.7" y="119.0" width="51.3" height="29.0" rx="4.6" fill="url(#kf)"/>
+                <rect x="863.5" y="119.0" width="51.3" height="29.0" rx="4.6" fill="url(#kf)"/>
+                <rect x="116.3" y="152.0" width="50.8" height="33.0" rx="5.1" fill="url(#kf)"/>
+                <rect x="173.1" y="152.0" width="50.8" height="33.0" rx="5.1" fill="url(#kf)"/>
+                <rect x="229.9" y="152.0" width="50.8" height="33.0" rx="5.1" fill="url(#kf)"/>
+                <rect x="286.7" y="152.0" width="466.6" height="33.0" rx="5.1" fill="url(#kf)"/>
+                <rect x="759.3" y="152.0" width="50.8" height="33.0" rx="5.1" fill="url(#kf)"/>
+                <rect x="816.1" y="152.0" width="50.8" height="33.0" rx="5.1" fill="url(#kf)"/>
+                <rect x="872.9" y="152.0" width="50.8" height="33.0" rx="5.1" fill="url(#kf)"/>
+                </g>
+                <path d="M380.0 197.0 L660.0 197.0 Q668.0 197.0 668.7 205.0 L670.0 244.0 Q670.9 252 662.0 252 L378.0 252 Q369.1 252 370.0 244.0 L371.3 205.0 Q372.0 197.0 380.0 197.0 Z" fill="url(#tp)" stroke="#2B3244" stroke-width="1.2"/>
+                <path d="M390.0 198.6 L650.0 198.6" stroke="rgba(255,255,255,.045)" stroke-width="1" fill="none"/>
+                </svg>
+                <i class="lap-shadow"></i>
               </div>
-              <div class="hinge"></div>
-              <div class="deck">
-                <i class="keys"></i>
-                <i class="trackpad"></i>
-              </div>
-              <i class="lap-shadow"></i>
             </div>
           </div>
         </div>
@@ -1258,56 +1311,49 @@ function choreograph(){
   var ctx = null;
 
   function build(self){
-    /* -------- the laptop sequence. The pinned stage is one viewport tall;
-       the scroll distance underneath it is 340% — every beat of it scrubbed,
-       nothing on a clock. Order: cue out → lid opens → camera moves in →
-       the offer assembles on the screen → camera pulls back, lid closes →
-       the spine takes over below the laptop. -------- */
-    /* .seq is already on <html> from the pre-paint inline script, so the
-       first painted frame was the sequence start state; this is a no-op
+    /* -------- the hero sequence, INVERTED: the first frame is the offer,
+       full screen, real DOM at raster scale 1. The pinned stage is one
+       viewport tall; the scroll distance underneath it is 340%, every
+       beat of it scrubbed. Order: cue out → the copy shrinks (one wrapper
+       transform) while the laptop chrome fades and converges rigidly
+       around it → a single-frame, geometry-matched swap puts the copy on
+       the screen face → the lid closes over it → the laptop recedes and
+       the spine takes over below it. -------- */
+    /* .seq is already on <html> from the pre-paint inline script; no-op
        guard for any path that reaches here without it. */
     document.documentElement.classList.add("seq");
 
-    gsap.set(".lid", { rotationX: -84 });
-    gsap.set(".screen-full", { opacity: 0 });
-    gsap.set(".hero-copy", { autoAlpha: 0, transformOrigin: "50% 50%" });
-
-    /* the on-screen copy is a scaled CLONE of .hero-copy — same width, same
-       styles, so the line wrapping is identical and the handover can overlay
-       the two exactly. The cqw miniature is the no-JS render only. */
     var copyEl = document.querySelector(".hero-copy");
     var screenUI = document.querySelector(".screen-ui");
+    var shrinkEl = document.querySelector(".shrink");
+    var lapArea = document.querySelector(".laptop-area");
+
+    gsap.set(".lid", { rotationX: 0 });
+
+    /* the copy that rides the screen through the close is a clone with the
+       hero copy's width — identical styles, identical wrapping. It stays
+       HIDDEN until the single-frame swap; the shrink itself is one
+       element, one transform, never a crossfade. */
     var screenCopy = copyEl.cloneNode(true);
     screenCopy.className = "screen-copy";
     screenCopy.setAttribute("aria-hidden", "true");
     screenCopy.querySelectorAll("a").forEach(function(a){ a.setAttribute("tabindex", "-1"); });
     screenUI.appendChild(screenCopy);
-    gsap.set(screenCopy, { xPercent: -50, yPercent: -50, autoAlpha: 1 });
+    gsap.set(screenCopy, { xPercent: -50, yPercent: -50, autoAlpha: 0 });
 
-    /* the compositor's painted region for the 3D subtree caps near the
-       viewport width, so the 3D zoom stays inside that budget and the
-       full-viewport screen surface below carries the dive the rest of
-       the way. */
-    function zoomScale(){
-      var lw = document.querySelector(".laptop").offsetWidth || 480;
-      return Math.min(2.1, (window.innerWidth * .96) / lw);
-    }
-    function zoomY(){ return window.innerHeight * .17; }
-
-    /* -------- the handover is measured, not guessed. Put the laptop in its
-       zoomed, open state, read where the miniature headline actually lands
-       on screen, and derive the scale + translate that lays the full-screen
-       copy's headline exactly over it. During both crossfades the geometry
-       is frozen and the two opacities are linear over the same window, so
-       they sum to ~1 — never an empty frame, never a double ghost. -------- */
-    var hand = { s: .62, x: 0, y: 0 };
+    /* -------- the landing is measured, not guessed. With everything at
+       rest (wrapper identity, laptop at layout size, lid flat) read where
+       the clone's headline sits on the screen face and solve the wrapper
+       transform that lays the full-size copy's headline exactly over it.
+       Then give the chrome the exact INVERSE of that transform: one rigid
+       wrapper tween moves both, and at the end of the shrink the chrome
+       is at resting size with the copy exactly on its screen. -------- */
+    var hand = { s: .5, x: 0, y: 0 };
     function measure(){
-      var Z = zoomScale();
-      /* natural layout first: the clone gets the hero copy's width so its
-         wrapping is identical, then a scale that fits it on the screen */
-      gsap.set(".lid", { rotationX: -8 });
+      gsap.set(shrinkEl, { scale: 1, x: 0, y: 0 });
+      gsap.set(lapArea, { scale: 1, x: 0, y: 0 });
       gsap.set(".zoom", { scale: 1, y: 0 });
-      gsap.set(copyEl, { scale: 1, x: 0, y: 0 });
+      gsap.set(".lid", { rotationX: 0 });
       gsap.set(screenCopy, { scale: 1 });
       screenCopy.style.width = copyEl.clientWidth + "px";
       var k = Math.min(
@@ -1315,22 +1361,18 @@ function choreograph(){
         (screenUI.clientHeight * .86) / Math.max(1, screenCopy.offsetHeight)
       );
       gsap.set(screenCopy, { scale: k });
-      /* now the zoomed, open state: read where the clone's headline really
-         lands and solve the transform that overlays the full copy on it */
-      gsap.set(".zoom", { scale: Z, y: zoomY() });
       var chr = screenCopy.querySelector("h1").getBoundingClientRect();
       var hr = copyEl.querySelector("h1").getBoundingClientRect();
-      var cr = copyEl.getBoundingClientRect();
+      var sr = shrinkEl.getBoundingClientRect();
       if (chr.height > 1 && hr.height > 1) {
-        var sc = chr.width / hr.width;                     /* exact, incl. perspective */
-        var ccy = cr.top + cr.height / 2, ccx = cr.left + cr.width / 2;
+        var cx = sr.left + sr.width / 2, cy = sr.top + sr.height / 2;
+        var sc = chr.width / hr.width;
         hand.s = sc;
-        hand.y = (chr.top + chr.height / 2) - (ccy + ((hr.top + hr.height / 2) - ccy) * sc);
-        hand.x = (chr.left + chr.width / 2) - (ccx + ((hr.left + hr.width / 2) - ccx) * sc);
+        hand.x = (chr.left + chr.width / 2) - (cx + ((hr.left + hr.width / 2) - cx) * sc);
+        hand.y = (chr.top + chr.height / 2) - (cy + ((hr.top + hr.height / 2) - cy) * sc);
       }
-      gsap.set(".lid", { rotationX: -84 });
-      gsap.set(".zoom", { scale: 1, y: 0 });
-      gsap.set(copyEl, { autoAlpha: 0 });
+      /* chrome = inverse of the landing transform, about the same origin */
+      gsap.set(lapArea, { scale: 1 / hand.s, x: -hand.x / hand.s, y: -hand.y / hand.s });
     }
     measure();
 
@@ -1342,43 +1384,28 @@ function choreograph(){
       }
     });
     tl.to(".cue", { autoAlpha: 0, duration: .05 }, 0)
-      .to(".lid", { rotationX: -8, duration: .24, ease: "power1.inOut" }, .03)
-      .to(".zoom", { scale: zoomScale, y: zoomY, duration: .24, ease: "power1.inOut" }, .18)
-      .to(".screen-full", { opacity: 1, duration: .1, ease: "power1.in" }, .40)
-      /* handover in: zoom finished at .42, both copies pinned to the same
-         headline geometry, opacities crossfade linearly and sum to 1 */
-      .to(".screen-copy", { autoAlpha: 0, duration: .06 }, .42)
-      .fromTo(".hero-copy",
-        { autoAlpha: 0,
-          scale: function(){ return hand.s; },
+      /* the chrome fades in around the still-large copy… */
+      .to(lapArea, { autoAlpha: 1, duration: .12, ease: "power1.in" }, .02)
+      /* …while ONE wrapper transform carries copy + chrome together: the
+         copy only ever scales DOWN from raster scale 1, so it stays sharp
+         the whole way onto the screen face */
+      .fromTo(shrinkEl,
+        { scale: 1, x: 0, y: 0 },
+        { scale: function(){ return hand.s; },
           x: function(){ return hand.x; },
-          y: function(){ return hand.y; } },
-        { autoAlpha: 1, duration: .06, immediateRender: false }, .42)
-      /* the copy grows from the screen to full-readable; the laptop chrome
-         (mini already gone) slips away underneath it */
-      .to(".hero-copy", { scale: 1, x: 0, y: 0, duration: .12, ease: "power1.inOut" }, .48)
-      .to(".laptop-area", { autoAlpha: 0, duration: .06 }, .48)
-      /* held open and readable ~.60–.72 */
-      /* the close mirrors the open: chrome returns, the copy shrinks back
-         onto the screen face, crossfades to the miniature at the same
-         frozen geometry, then the laptop recedes and the lid shuts with
-         the copy still on the screen. */
-      .to(".laptop-area", { autoAlpha: 1, duration: .05 }, .72)
-      .to(".hero-copy", {
-        scale: function(){ return hand.s; },
-        x: function(){ return hand.x; },
-        y: function(){ return hand.y; },
-        duration: .12, ease: "power1.inOut"
-      }, .72)
-      .to(".hero-copy", { autoAlpha: 0, duration: .06 }, .84)
-      .to(".screen-copy", { autoAlpha: 1, duration: .06 }, .84)
-      .to(".screen-full", { opacity: 0, duration: .08 }, .84)
+          y: function(){ return hand.y; },
+          duration: .42, ease: "power1.inOut", immediateRender: false }, .03)
+      /* the swap is a single frame at measured-identical geometry — sets,
+         not fades: no gap, no ghost, no double */
+      .set(copyEl, { autoAlpha: 0 }, .46)
+      .set(screenCopy, { autoAlpha: 1 }, .46)
+      /* held ~.46–.58: the laptop at rest, the page live on its screen */
+      .to(".lid", { rotationX: -84, duration: .26, ease: "power1.inOut" }, .58)
       .to(".zoom", {
         scale: .48,
         y: function(){ return window.innerHeight * .3; },
-        duration: .1, ease: "power1.inOut"
-      }, .9)
-      .to(".lid", { rotationX: -84, duration: .08, ease: "power1.inOut" }, .92);
+        duration: .22, ease: "power1.inOut"
+      }, .72);
 
     /* fonts settle after DOMContentLoaded, and a resize (rotation, window
        drag) changes every measured value: re-measure whenever the reader
