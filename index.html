@@ -168,6 +168,14 @@ details p{padding-bottom:1.3rem;color:var(--ink-2);margin:0;max-width:60ch}
   }
 }
 
+/* The proof is the artefact, so the frame stays quiet: a hairline, the page's
+   own raised surface, and no shadow pretending to be a product mockup. */
+figure{margin:2.5rem 0 0;display:grid;gap:.9rem}
+figure img{
+  width:100%;height:auto;display:block;border:1px solid var(--line);
+  border-radius:3px;background:var(--raised);
+}
+figcaption{color:var(--ink-3);font-size:.92rem;max-width:58ch}
 footer{padding-block:3rem 4rem;color:var(--ink-3);font-size:.92rem}
 footer a{color:var(--ink-2)}
 a{color:var(--accent)}
@@ -265,6 +273,14 @@ a{color:var(--accent)}
         <h3>It keeps moving without me</h3>
         <p>I am not the only person who can drive the factory. Other engineers work in it too, so if I am ill or away your build carries on instead of stopping. You deal with me the whole way through.</p>
       </div>
+      <figure class="rise">
+        <picture>
+          <source srcset="admin.webp" type="image/webp">
+          <img src="admin.jpg" width="1600" height="891" loading="lazy" decoding="async"
+               alt="An operations panel showing running cost per engine, total model calls, and a projection of cost at 1, 10, 50, 100 and 500 engines.">
+        </picture>
+        <figcaption>The cost side of the same factory. 17,548 model calls across three running engines, priced per engine, with the projection out to 500. I build the thing that watches what the thing costs — which is how a fixed price stays fixed.</figcaption>
+      </figure>
     </div>
   </section>
 
