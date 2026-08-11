@@ -587,10 +587,13 @@ function rgb(hex){
    Three phase-shifted sine curves sampled into paths — the guilloché idea off
    a banknote, at hairline weight, with one brass lozenge on the centre.
    =========================================================================== */
-(function engrave(){
+var engrave = (function(){
   var nodes = document.querySelectorAll("[data-engrave]");
-  if (!nodes.length) return;
   var H = 22, MID = H / 2, LAMBDA = 52;   /* one cycle every 52 real px */
+  /* One slot, not a list: the rules' draw-on has to be rebuilt when a resize
+     replaces the paths it was animating, and only the live choreography owns
+     it. Cleared on revert, so nothing survives the motion switch. */
+  var redrawn = null;
 
   function draw(svg){
     var W = Math.round(svg.getBoundingClientRect().width);
@@ -621,8 +624,13 @@ function rgb(hex){
 
   for (var i = 0; i < nodes.length; i++) {
     draw(nodes[i]);
-    if ("ResizeObserver" in window) new ResizeObserver(function(es){ draw(es[0].target); }).observe(nodes[i]);
+    if ("ResizeObserver" in window) new ResizeObserver(function(es){
+      draw(es[0].target);
+      if (redrawn) redrawn();
+    }).observe(nodes[i]);
   }
+
+  return { onRedraw: function(fn){ redrawn = fn; } };
 })();
 
 /* ===========================================================================
@@ -993,6 +1001,39 @@ var leak = (function(){
 })();
 
 /* ===========================================================================
+   3c. Splitting a heading into words.
+
+   Runtime only, and deliberately not a library: the words stay ordinary inline
+   spans separated by the original whitespace text nodes, so the line-breaking
+   the browser does — including `text-wrap: balance` — is the same computation
+   it did before the split. An inline-block per word would have changed that.
+   The heading's text content is untouched, so a screen reader reads the
+   sentence, not a list of words. Split once; a rebuild reuses the same spans.
+   =========================================================================== */
+function words(el){
+  if (el._words) return el._words;
+  var parts = el.textContent.split(/(\s+)/), out = [], i, s;
+  el.textContent = "";
+  for (i = 0; i < parts.length; i++) {
+    if (!parts[i]) continue;
+    if (/^\s+$/.test(parts[i])) { el.appendChild(document.createTextNode(parts[i])); continue; }
+    s = document.createElement("span");
+    s.textContent = parts[i];
+    el.appendChild(s);
+    out.push(s);
+  }
+  return (el._words = out);
+}
+
+/* A figure written back exactly as it was authored: the grouping comma and the
+   decimal place are part of the number, not decoration added at the end. */
+function figure(v, dp, grouped){
+  var s = v.toFixed(dp), p = s.split(".");
+  if (grouped) p[0] = p[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  return p.join(".");
+}
+
+/* ===========================================================================
    4. Choreography. One scrubbed sequence owns the page: the reader's scroll
    opens the gaps in the drawing, and the bars underneath answer it. Nothing
    in the hero moves.
@@ -1009,7 +1050,7 @@ function choreograph(){
      visible in the markup, so reverting leaves the page whole. */
   var ctx = null;
 
-  function build(){
+  function build(self){
 
     if (leak) {
       var sync = function(self){ leak.progress(self.progress); };
@@ -1049,6 +1090,93 @@ function choreograph(){
       opacity: 1, x: 0, duration: 0.7, ease: "expo.out", stagger: 0.065,
       scrollTrigger: { trigger: ".offer", start: "top 82%", once: true }
     });
+
+    /* --- the section headings fill, word by word, at the reader's own pace.
+       Colour only: no opacity, no transform, so nothing is ever hidden and
+       nothing moves. The from-colour is --ink-3, which is a legible caption
+       colour in both themes, so a reader who stops mid-sentence is looking at
+       quiet text rather than a gap. The hero h1 is not in this set. --- */
+    var ink3 = tok("--ink-3", "#7A8396"), ink = tok("--ink", "#ECEAE4");
+    gsap.utils.toArray("h2").forEach(function(h){
+      gsap.fromTo(words(h), { color: ink3 }, {
+        color: ink, ease: "none", duration: 1, stagger: { each: 0.55 },
+        scrollTrigger: { trigger: h, start: "top 90%", end: "top 45%", scrub: 0.5 }
+      });
+    });
+
+    /* --- the funnel figures count with their own bars. One tween drives four
+       proxies so the stagger is the bars' stagger, and one onUpdate writes all
+       four, formatted the way they were authored. onComplete writes the
+       authored string back verbatim: the last frame of an ease is not a place
+       to trust arithmetic with a comma and a decimal in it. --- */
+    var vals = gsap.utils.toArray(".step-val"), specs = [], proxies = [];
+    vals.forEach(function(el){
+      var raw = el.textContent, m = raw.match(/[\d,]+(?:\.\d+)?/);
+      if (!m) return;
+      var digits = m[0];
+      specs.push({
+        el: el, raw: raw,
+        pre: raw.slice(0, m.index), post: raw.slice(m.index + digits.length),
+        target: parseFloat(digits.replace(/,/g, "")),
+        dp: (digits.split(".")[1] || "").length,
+        grouped: digits.indexOf(",") >= 0
+      });
+      proxies.push({ v: 0 });
+    });
+    function settle(){ specs.forEach(function(s){ s.el.textContent = s.raw; }); }
+    if (specs.length) {
+      gsap.to(proxies, {
+        v: function(i){ return specs[i].target; },
+        duration: 1.2, ease: "expo.out", stagger: 0.085,
+        scrollTrigger: { trigger: ".funnel", start: "top 84%", once: true },
+        onUpdate: function(){
+          for (var i = 0; i < specs.length; i++) {
+            specs[i].el.textContent =
+              specs[i].pre + figure(proxies[i].v, specs[i].dp, specs[i].grouped) + specs[i].post;
+          }
+        },
+        onComplete: settle
+      });
+    }
+
+    /* --- the engraved rules draw themselves in. Dash state is set here, never
+       in the stylesheet, so with this script gone the rule is simply a finished
+       engraving. The hero's rule is excluded by name: it is part of the offer,
+       and the offer does not animate. Redrawing on resize replaces the very
+       paths being animated, so the rebuild is scoped back into this context. --- */
+    var ruleTweens = [];
+    function drawRules(){
+      ruleTweens.forEach(function(t){ if (t.scrollTrigger) t.scrollTrigger.kill(); t.kill(); });
+      ruleTweens = [];
+      gsap.utils.toArray("[data-engrave]:not(.rule--hero)").forEach(function(svg){
+        var strokes = gsap.utils.toArray(svg.querySelectorAll("path[stroke]"));
+        if (!strokes.length) return;
+        var lens = strokes.map(function(p){ return p.getTotalLength() || 0; });
+        gsap.set(strokes, {
+          strokeDasharray: function(i){ return lens[i] + " " + lens[i]; },
+          strokeDashoffset: function(i){ return lens[i]; }
+        });
+        ruleTweens.push(gsap.to(strokes, {
+          strokeDashoffset: 0, ease: "none", duration: 1, stagger: 0.12,
+          scrollTrigger: {
+            /* the whole of the block the rule belongs to, ending where the page
+               itself ends — a footer rule has too little scroll left below it to
+               own a range of its own, and an unfinished draw is a broken rule. */
+            trigger: svg.closest("footer, section") || svg.parentNode,
+            start: "top bottom", end: "bottom bottom", scrub: 0.6
+          }
+        }));
+      });
+    }
+    drawRules();
+    engrave.onRedraw(function(){ self.add(drawRules); });
+
+    /* ctx.revert() puts inline styles back but cannot know what a text node
+       used to say, and it does not un-hook a module. Both are undone here. */
+    return function(){
+      engrave.onRedraw(null);
+      settle();
+    };
   }
 
   function applyMotion(){
