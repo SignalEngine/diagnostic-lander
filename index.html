@@ -13,7 +13,7 @@
 <meta property="og:type" content="website">
 <style>
   *,*::before,*::after{box-sizing:border-box}
-  html{-webkit-text-size-adjust:100%;overflow-x:clip}
+  html{-webkit-text-size-adjust:100%}
   body{margin:0}
 </style>
 </head>
@@ -40,6 +40,7 @@
   --btn-edge:#9D75F9;
   --btn-ink:#FFFFFF;
   --leak:#F97316;
+  --scr1:#0A0D15;--scr2:#080A10;
   --sans:"Archivo",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
   --serif:"Instrument Serif",Georgia,"Times New Roman",serif;
   color-scheme:dark;
@@ -51,6 +52,7 @@
     --accent:#5B21B6;--accent-text:#5B21B6;
     --btn:#5B21B6;--btn-hi:#6D28D9;--btn-edge:#4C1D95;--btn-ink:#FFFFFF;
     --leak:#9A3412;
+    --scr1:#FDFDFB;--scr2:#EEEDE9;
     color-scheme:light;
   }
 }
@@ -60,6 +62,7 @@
   --accent:#5B21B6;--accent-text:#5B21B6;
   --btn:#5B21B6;--btn-hi:#6D28D9;--btn-edge:#4C1D95;--btn-ink:#FFFFFF;
   --leak:#9A3412;
+  --scr1:#FDFDFB;--scr2:#EEEDE9;
   color-scheme:light;
 }
 :root[data-theme="dark"]{
@@ -68,6 +71,7 @@
   --accent:#8B5CF6;--accent-text:#A78BFA;
   --btn:#6D28D9;--btn-hi:#8250EE;--btn-edge:#9D75F9;--btn-ink:#FFFFFF;
   --leak:#F97316;
+  --scr1:#0A0D15;--scr2:#080A10;
   color-scheme:dark;
 }
 
@@ -160,6 +164,7 @@ p{margin:0 0 1.1rem;max-width:64ch}
 /* ---- the laptop, drawn in CSS 3D. Bezel, deck, hinge, nothing stock. ---- */
 .laptop-area{margin-top:clamp(2.5rem,6vw,4rem);display:grid;justify-items:center;position:relative}
 .zoom{will-change:transform}
+.lid,.deck{will-change:transform}
 .scene{perspective:1500px;perspective-origin:50% 26%}
 .laptop{
   position:relative;width:min(30rem,80vw);
@@ -185,7 +190,7 @@ p{margin:0 0 1.1rem;max-width:64ch}
   position:relative;width:100%;height:100%;border-radius:5px;overflow:hidden;
   background:
     radial-gradient(120% 90% at 50% 118%,rgba(139,92,246,.32),rgba(139,92,246,.05) 55%,transparent 75%),
-    linear-gradient(180deg,#0A0D15,#080A10);
+    linear-gradient(180deg,var(--scr1),var(--scr2));
   border:1px solid #1A2030;
 }
 .screen-ui i{position:absolute;display:block}
@@ -272,6 +277,14 @@ p{margin:0 0 1.1rem;max-width:64ch}
   display:grid;
 }
 .is-seq .laptop-area{position:absolute;inset:0;margin:0;display:grid;place-items:center}
+.screen-full{
+  display:none;position:absolute;top:0;bottom:0;left:50%;width:100vw;
+  transform:translateX(-50%);z-index:2;opacity:0;pointer-events:none;
+  background:
+    radial-gradient(120% 90% at 50% 118%,rgba(139,92,246,.3),rgba(139,92,246,.05) 55%,transparent 75%),
+    linear-gradient(180deg,var(--scr1),var(--scr2));
+}
+.is-seq .screen-full{display:block}
 .is-seq .hero-copy{
   position:absolute;inset:0;z-index:3;
   display:grid;align-content:center;justify-items:center;text-align:center;
@@ -425,6 +438,7 @@ a{color:var(--accent-text)}
   <header class="hero" id="top">
     <svg class="plot" data-plot aria-hidden="true" focusable="false"></svg>
     <div class="hero-stage">
+      <div class="screen-full" aria-hidden="true"></div>
       <div class="hero-copy">
         <h1 class="hc"><span class="q">“</span>That’s just how we do&nbsp;it.<span class="q">”</span></h1>
         <p class="lede hc">The most expensive sentence in any business. I find the steps you’ve stopped seeing, put a number on what they cost, and fix them.</p>
@@ -1267,6 +1281,7 @@ function choreograph(){
     var bLen = burst.getTotalLength();
 
     gsap.set(".lid", { rotationX: -84 });
+    gsap.set(".screen-full", { opacity: 0 });
     gsap.set(".hero-copy", { autoAlpha: 0 });
     gsap.set(".hero-copy .hc", { y: 34, autoAlpha: 0 });
     gsap.set(burst, { strokeDasharray: bLen + " " + bLen, strokeDashoffset: bLen });
@@ -1281,10 +1296,19 @@ function choreograph(){
     tl.to(".cue", { autoAlpha: 0, duration: .05 }, 0)
       .to(".lid", { rotationX: -8, duration: .24, ease: "power1.inOut" }, .03)
       .to(".zoom", {
-        scale: 2.1,
+        /* the compositor's painted region for the 3D subtree caps near the
+           viewport width, so the 3D zoom stays inside that budget and the
+           full-viewport screen surface below carries the dive the rest of
+           the way. */
+        scale: function(){
+          var lw = document.querySelector(".laptop").offsetWidth || 480;
+          return Math.min(2.1, (window.innerWidth * .96) / lw);
+        },
         y: function(){ return window.innerHeight * .17; },
         duration: .3, ease: "power1.inOut"
       }, .18)
+      .to(".screen-full", { opacity: 1, duration: .12, ease: "power1.in" }, .38)
+      .to(".laptop-area", { autoAlpha: 0, duration: .06 }, .48)
       .to(".hero-copy", { autoAlpha: 1, duration: .04 }, .44)
       .to(".hero-copy .hc", {
         y: 0, autoAlpha: 1, duration: .17, stagger: .045, ease: "power2.out"
@@ -1300,6 +1324,8 @@ function choreograph(){
         y: function(){ return -window.innerHeight * .14; },
         duration: .15, ease: "power1.inOut"
       }, .76)
+      .to(".laptop-area", { autoAlpha: 1, duration: .05 }, .73)
+      .to(".screen-full", { opacity: 0, duration: .08 }, .76)
       .to(".screen-ui", { opacity: 1, duration: .1 }, .78)
       .to(".lid", { rotationX: -84, duration: .11, ease: "power1.inOut" }, .8)
       .to(burst, { strokeDashoffset: 0, duration: .1 }, .9);
