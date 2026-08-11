@@ -275,6 +275,11 @@ p{margin:0 0 1.1rem;max-width:64ch}
 .hero-copy .lede{margin-inline:auto}
 .hero-copy .hero-offer{justify-content:center;border-top-color:color-mix(in srgb,var(--line) 70%,transparent)}
 .seq .hero-stage{height:100svh;position:relative}
+/* a non-transformed clip box sized to the exact scrollbar-free viewport
+   (JS sets its negative insets): the oversized converging chrome is
+   clipped at the true screen edges — visually a no-op — and never
+   contributes to the document's scrollable overflow at any width. */
+.seq .stage-clip{position:absolute;top:0;bottom:0;left:0;right:0;overflow:clip}
 .seq .shrink{position:absolute;inset:0;will-change:transform}
 .seq .hero-copy{position:absolute;inset:0;z-index:3}
 .seq .laptop-area{
@@ -429,6 +434,7 @@ a{color:var(--accent-text)}
   <header class="hero" id="top">
     <svg class="plot" data-plot aria-hidden="true" focusable="false"></svg>
     <div class="hero-stage">
+      <div class="stage-clip">
       <div class="shrink">
         <div class="hero-copy">
           <h1 class="hc"><span class="q">“</span>That’s just how we do&nbsp;it.<span class="q">”</span></h1>
@@ -564,6 +570,7 @@ a{color:var(--accent-text)}
             </div>
           </div>
         </div>
+      </div>
       </div>
       <div class="cue" aria-hidden="true">
         <svg class="mouse" viewBox="0 0 28 44" fill="none">
@@ -1327,6 +1334,7 @@ function choreograph(){
     var screenUI = document.querySelector(".screen-ui");
     var shrinkEl = document.querySelector(".shrink");
     var lapArea = document.querySelector(".laptop-area");
+    var clipEl = document.querySelector(".stage-clip");
 
     gsap.set(".lid", { rotationX: 0 });
 
@@ -1350,6 +1358,13 @@ function choreograph(){
        is at resting size with the copy exactly on its screen. -------- */
     var hand = { s: .5, x: 0, y: 0 };
     function measure(){
+      /* size the clip box to the exact scrollbar-free viewport: negative
+         insets of half the difference between viewport and stage width.
+         Its border box then sits exactly on the screen edges — clipping
+         is invisible, and nothing can leak into scrollable overflow. */
+      var inset = (document.documentElement.clientWidth -
+                   clipEl.parentElement.clientWidth) / 2;
+      clipEl.style.left = clipEl.style.right = (-inset) + "px";
       gsap.set(shrinkEl, { scale: 1, x: 0, y: 0 });
       gsap.set(lapArea, { scale: 1, x: 0, y: 0 });
       gsap.set(".zoom", { scale: 1, y: 0 });
