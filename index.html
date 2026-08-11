@@ -140,9 +140,9 @@ p{margin:0 0 1.1rem;max-width:64ch}
 .cta--ghost:focus-visible{outline-color:var(--accent)}
 
 /* ================= hero =================
-   Static truth first: with no script, or motion off, this is an open laptop
-   under the complete offer. The scroll sequence is layered on by JS adding
-   .is-seq, and taken off again by removing it. */
+   Static truth first: with no script this is an open laptop — the page
+   itself miniature on its screen — under the complete offer. The scroll
+   sequence is layered on by JS adding .is-seq. */
 .hero{position:relative;isolation:isolate;padding-block:clamp(3rem,9vw,6.5rem) clamp(2.5rem,6vw,4.5rem)}
 .hero > *{position:relative;z-index:1}
 .hero .plot{
@@ -193,16 +193,29 @@ p{margin:0 0 1.1rem;max-width:64ch}
     linear-gradient(180deg,var(--scr1),var(--scr2));
   border:1px solid #1A2030;
 }
-.screen-ui i{position:absolute;display:block}
-.su-bar{height:7%;border-radius:3px;background:linear-gradient(90deg,rgba(139,92,246,.55),rgba(139,92,246,.18))}
-.su-b1{top:16%;left:8%;width:44%}
-.su-b2{top:31%;left:8%;width:60%;opacity:.6}
-.su-b3{top:46%;left:8%;width:30%;opacity:.4}
-.su-dot{top:15%;right:8%;width:9%;aspect-ratio:1;border-radius:50%;
-  border:1.5px solid rgba(139,92,246,.8);
-  background:radial-gradient(circle at 35% 35%,rgba(139,92,246,.5),transparent 70%)}
-.su-base{bottom:10%;left:8%;right:8%;height:16%;border-radius:4px;
-  border:1px solid rgba(139,92,246,.28);background:rgba(139,92,246,.07)}
+/* the real hero copy, as a miniature on the screen face. Sized in container
+   units so it scales with the laptop through the whole 3D sequence. While
+   small it only has to be recognisably THE page; the full-screen hero-copy
+   layer takes over for the readable state. */
+.screen-ui{container-type:size}
+.mini{
+  position:absolute;inset:0;display:grid;align-content:center;justify-items:center;
+  text-align:center;row-gap:5cqh;padding:5cqh 7cqw;
+}
+.mini p{margin:0;max-width:none}
+.mini-h{font-family:var(--serif);font-style:italic;font-weight:400;font-size:8.4cqw;line-height:1.05;letter-spacing:-0.012em;color:var(--ink);text-wrap:balance}
+.mini-h .q{color:var(--accent-text);font-style:normal}
+.mini-lede{font-size:3.1cqw;line-height:1.42;color:var(--ink-2);max-width:80cqw}
+.mini-offer{display:flex;flex-wrap:wrap;justify-content:center;align-items:baseline;gap:1cqh 2.6cqw;
+  padding-top:2.4cqh;border-top:1px solid color-mix(in srgb,var(--line) 70%,transparent)}
+.mini-offer .price{font-size:4.8cqw;color:var(--ink);letter-spacing:-0.04em}
+.mini-offer .what{font-size:2.5cqw;color:var(--ink-2)}
+.mini-cta{
+  display:inline-block;padding:2cqh 4.4cqw;border-radius:2.2cqw;
+  background:linear-gradient(180deg,var(--btn-hi),var(--btn));color:var(--btn-ink);
+  font-size:3cqw;font-weight:660;letter-spacing:-0.005em;
+  border:1px solid color-mix(in srgb,var(--btn-edge) 55%,transparent);
+}
 .lid-back{
   position:absolute;inset:0;border-radius:14px 14px 4px 4px;
   transform:rotateX(180deg);
@@ -249,19 +262,29 @@ p{margin:0 0 1.1rem;max-width:64ch}
   filter:blur(6px);z-index:-1;
 }
 
-/* the scroll cue — the one element on the page allowed to pulse, and only
-   while the sequence is live. */
+/* the scroll cue — a drawn mouse with a rolling wheel, top of the first
+   viewport, the one element on the page allowed to loop. Fades out over the
+   first few percent of the sequence. */
 .cue{
-  display:none;position:absolute;bottom:1.6rem;left:50%;transform:translateX(-50%);
-  flex-direction:column;align-items:center;gap:.3rem;
-  color:var(--accent-text);font-size:.86rem;letter-spacing:.14em;text-transform:uppercase;
+  display:none;position:absolute;top:clamp(1rem,3.5vh,2.2rem);left:50%;transform:translateX(-50%);
+  flex-direction:column;align-items:center;gap:.5rem;
+  color:var(--accent-text);font-size:.78rem;letter-spacing:.16em;text-transform:uppercase;
   z-index:4;pointer-events:none;
 }
-.cue svg{width:1.05rem;height:1.05rem}
-.is-seq .cue{display:flex;animation:cue-pulse 2.1s ease-in-out infinite}
-@keyframes cue-pulse{
-  0%,100%{opacity:.55;text-shadow:0 0 0 rgba(139,92,246,0)}
-  50%{opacity:1;text-shadow:0 0 18px rgba(139,92,246,.8)}
+.cue .mouse{width:1.75rem;height:auto;display:block}
+.cue .chev{width:.95rem;height:auto;display:block}
+.is-seq .cue{display:flex}
+.is-seq .cue .wheel{animation:cue-wheel 2s ease-in-out infinite}
+.is-seq .cue .chev{animation:cue-nudge 2s ease-in-out infinite}
+@keyframes cue-wheel{
+  0%{transform:translateY(0);opacity:0}
+  18%{opacity:1}
+  62%{transform:translateY(9px);opacity:1}
+  78%,100%{transform:translateY(9px);opacity:0}
+}
+@keyframes cue-nudge{
+  0%,100%{transform:translateY(0);opacity:.55}
+  55%{transform:translateY(4px);opacity:1}
 }
 
 /* the line that bursts from the laptop when it closes */
@@ -309,24 +332,6 @@ p{margin:0 0 1.1rem;max-width:64ch}
   border-block:1px solid var(--line);padding-block:1rem;
 }
 .diagram canvas{display:block;width:100%;height:clamp(11rem,40vw,16.5rem)}
-
-/* ---- the motion switch ---- */
-.motion{
-  margin-top:.95rem;display:inline-flex;align-items:center;gap:.55rem;
-  padding:.4rem .75rem;border:1px solid var(--line);border-radius:2px;
-  background:none;color:var(--ink-3);
-  font-family:inherit;font-size:.92rem;line-height:1.3;
-  cursor:pointer;-webkit-appearance:none;appearance:none;
-}
-.motion[hidden]{display:none}
-.motion:hover{color:var(--ink-2);border-color:var(--ink-3)}
-.motion:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-.motion .dot{
-  width:.5rem;height:.5rem;flex:none;border-radius:50%;
-  border:1px solid currentColor;
-}
-.motion[aria-pressed="true"] .dot{background:currentColor}
-.motion .state{min-width:6.4ch;text-align:left}
 
 /* ---- the funnel: real measured numbers, drawn ---- */
 .funnel{margin-top:2.5rem;display:grid;gap:1.4rem}
@@ -458,11 +463,12 @@ a{color:var(--accent-text)}
               <div class="lid">
                 <div class="screen">
                   <div class="screen-ui">
-                    <i class="su-bar su-b1"></i>
-                    <i class="su-bar su-b2"></i>
-                    <i class="su-bar su-b3"></i>
-                    <i class="su-dot"></i>
-                    <i class="su-base"></i>
+                    <div class="mini">
+                      <p class="mini-h"><span class="q">“</span>That’s just how we do&nbsp;it.<span class="q">”</span></p>
+                      <p class="mini-lede">The most expensive sentence in any business. I find the steps you’ve stopped seeing, put a number on what they cost, and fix them.</p>
+                      <p class="mini-offer"><span class="price num">£1,500</span><span class="what">fixed price · one page you can act on · five working days from access</span></p>
+                      <span class="mini-cta">Book a 15-minute call</span>
+                    </div>
                   </div>
                 </div>
                 <div class="lid-back"><i class="lb-mark"></i></div>
@@ -481,8 +487,12 @@ a{color:var(--accent-text)}
         </svg>
       </div>
       <div class="cue" aria-hidden="true">
+        <svg class="mouse" viewBox="0 0 28 44" fill="none">
+          <rect x="1.5" y="1.5" width="25" height="41" rx="12.5" stroke="currentColor" stroke-width="1.5"/>
+          <line class="wheel" x1="14" y1="10" x2="14" y2="17" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+        <svg class="chev" viewBox="0 0 16 10" fill="none"><path d="M2 2l6 5 6-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
         <span>Scroll</span>
-        <svg viewBox="0 0 16 16" fill="none"><path d="M3 6l5 5 5-5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </div>
     </div>
   </header>
@@ -495,11 +505,6 @@ a{color:var(--accent-text)}
       <canvas id="leak" role="img"
         aria-label="Work entering from the left and moving through four stages, with a share of it falling through the gaps between the stages and dropping away."></canvas>
     </div>
-
-    <button class="motion" type="button" id="motion" aria-pressed="false" hidden>
-      <span class="dot" aria-hidden="true"></span>
-      <span>Motion <span class="state">off</span></span>
-    </button>
 
     <div class="funnel">
       <div class="step rise">
@@ -708,7 +713,6 @@ a{color:var(--accent-text)}
 (function(){
 "use strict";
 
-var REDUCE = window.matchMedia("(prefers-reduced-motion: reduce)");
 var root = document.documentElement;
 
 function addL(mq, fn){
@@ -716,33 +720,11 @@ function addL(mq, fn){
 }
 
 /* ===========================================================================
-   0. Whether anything is allowed to move.
-
-   The OS decides by default, and under `reduce` nothing starts: no rAF, no
-   timelines, no pin. A stored choice overrides that in EITHER direction,
-   because the OS flag is not always a statement about motion — Samsung's
-   "Remove animations" is switched on by battery saver. WCAG 2.3.3 requires
-   that motion can be turned OFF; it does not require that a reader be
-   prevented from turning it on.
+   0. Motion is permanently on. The sequence, canvas, count-ups and word-fills
+   all build unconditionally whenever JS runs, regardless of the OS
+   reduced-motion flag (that flag is often set by battery saver, not choice).
+   The no-JS render is the one degraded path: the complete static page.
    =========================================================================== */
-var MOTION_KEY = "diagnostic:motion";
-var motionChoice = null;                      /* "on" | "off" | null = defer to OS */
-try {
-  var stored = localStorage.getItem(MOTION_KEY);
-  if (stored === "on" || stored === "off") motionChoice = stored;
-} catch (e) {}
-
-function motionOn(){ return motionChoice ? motionChoice === "on" : !REDUCE.matches; }
-
-var motionSubs = [];
-function onMotion(fn){ motionSubs.push(fn); }
-function emitMotion(){ for (var i = 0; i < motionSubs.length; i++) motionSubs[i](); }
-function setMotion(on){
-  motionChoice = on ? "on" : "off";
-  try { localStorage.setItem(MOTION_KEY, motionChoice); } catch (e) {}
-  emitMotion();
-}
-addL(REDUCE, emitMotion);
 
 /* deterministic noise — same drawing every load */
 var _s = 987654321;
@@ -1125,7 +1107,7 @@ var leak = (function(){
     for (var k = 0; k < 400; k++) step(1 / 60);
   }
   function start(){
-    if (running || !motionOn()) return;
+    if (running) return;
     prime();
     running = true; last = 0;
     raf = requestAnimationFrame(tick);
@@ -1136,51 +1118,19 @@ var leak = (function(){
     raf = 0;
   }
 
-  function still(){
-    _s = 987654321;
-    units = [];
-    st.open = [1, 1, 1];
-    st.lit = [1, 1, 1, 1];
-    var n = Math.round((W - pad.l - pad.r) / 3.2);
-    for (var i = 0; i < n; i++) {
-      var x = pad.l + rnd() * (W - pad.l - pad.r);
-      var seg = x < gapX[0] ? 0 : x < gapX[1] ? 1 : x < gapX[2] ? 2 : 3;
-      if (rnd() > [1, 0.567, 0.242, 0.21][seg]) continue;
-      units.push({ x: x, y: baseY + (rnd() * 2 - 1) * band, fall: false, a: 1,
-                   r: (1.5 + rnd() * 0.95) * u, next: seg, v: 0, vy: 0 });
-    }
-    for (var j = 0; j < 3; j++) {
-      var m = Math.round(26 * LOSS[j] * (W / 500));
-      for (var k = 0; k < m; k++) {
-        var d = rnd();
-        units.push({
-          x: gapX[j] + (rnd() * 2 - 1) * (gapW(j) / 2.4) + d * d * 11 * u,
-          y: chBot + 2 * u + d * d * (H - chBot - 6),
-          fall: true, a: 1 - d * 0.55, r: (1.5 + rnd() * 0.95) * u, next: j + 1, v: 0, vy: 0
-        });
-      }
-    }
-    paint();
-  }
-
   function resize(){
     layout();
-    if (motionOn()) paint(); else still();
-  }
-
-  function mode(){
-    if (motionOn()) { if (onScreen) start(); }
-    else { stop(); still(); }
+    paint();
   }
 
   readTokens();
   layout();
-  if (motionOn()) paint(); else still();
+  paint();
 
   if ("IntersectionObserver" in window) {
     new IntersectionObserver(function(es){
       onScreen = es[0].isIntersecting;
-      if (onScreen && motionOn()) start(); else stop();
+      if (onScreen) start(); else stop();
     }, { rootMargin: "120px 0px" }).observe(cv);
   } else { onScreen = true; start(); }
 
@@ -1191,10 +1141,9 @@ var leak = (function(){
     if (document.hidden) stop(); else if (onScreen) start();
   });
 
-  onMotion(mode);
   addL(window.matchMedia("(prefers-color-scheme: dark)"), function(){
     readTokens();
-    if (motionOn()) paint(); else still();
+    paint();
   });
 
   return {
@@ -1206,26 +1155,6 @@ var leak = (function(){
       if (!running) paint();
     }
   };
-})();
-
-/* ===========================================================================
-   3b. The switch. One control, both directions.
-   =========================================================================== */
-(function(){
-  var btn = document.getElementById("motion");
-  if (!btn) return;
-  var state = btn.querySelector(".state");
-
-  function label(){
-    var on = motionOn();
-    btn.setAttribute("aria-pressed", on ? "true" : "false");
-    state.textContent = on ? "on" : "off";
-  }
-
-  btn.addEventListener("click", function(){ setMotion(!motionOn()); });
-  onMotion(label);
-  label();
-  btn.hidden = false;
 })();
 
 /* ===========================================================================
@@ -1282,8 +1211,7 @@ function choreograph(){
 
     gsap.set(".lid", { rotationX: -84 });
     gsap.set(".screen-full", { opacity: 0 });
-    gsap.set(".hero-copy", { autoAlpha: 0 });
-    gsap.set(".hero-copy .hc", { y: 34, autoAlpha: 0 });
+    gsap.set(".hero-copy", { autoAlpha: 0, scale: .62, transformOrigin: "50% 50%" });
     gsap.set(burst, { strokeDasharray: bLen + " " + bLen, strokeDashoffset: bLen });
 
     var tl = gsap.timeline({
@@ -1308,12 +1236,12 @@ function choreograph(){
         duration: .3, ease: "power1.inOut"
       }, .18)
       .to(".screen-full", { opacity: 1, duration: .12, ease: "power1.in" }, .38)
+      /* the handover: the same copy, already on the screen face, keeps
+         growing — the full-screen version fades in scaling up to meet it
+         while the miniature fades out underneath. No re-assembly, no jump. */
+      .to(".hero-copy", { autoAlpha: 1, scale: 1, duration: .16, ease: "power1.inOut" }, .40)
+      .to(".screen-ui .mini", { opacity: 0, duration: .08, ease: "power1.in" }, .42)
       .to(".laptop-area", { autoAlpha: 0, duration: .06 }, .48)
-      .to(".hero-copy", { autoAlpha: 1, duration: .04 }, .44)
-      .to(".hero-copy .hc", {
-        y: 0, autoAlpha: 1, duration: .17, stagger: .045, ease: "power2.out"
-      }, .46)
-      .to(".screen-ui", { opacity: .3, duration: .12 }, .44)
       /* held open and readable ~.68–.76 */
       .to(".zoom", {
         scale: .48,
@@ -1326,7 +1254,7 @@ function choreograph(){
       }, .76)
       .to(".laptop-area", { autoAlpha: 1, duration: .05 }, .73)
       .to(".screen-full", { opacity: 0, duration: .08 }, .76)
-      .to(".screen-ui", { opacity: 1, duration: .1 }, .78)
+      .to(".screen-ui .mini", { opacity: 1, duration: .1 }, .78)
       .to(".lid", { rotationX: -84, duration: .11, ease: "power1.inOut" }, .8)
       .to(burst, { strokeDashoffset: 0, duration: .1 }, .9);
 
@@ -1433,25 +1361,12 @@ function choreograph(){
     };
   }
 
-  function applyMotion(){
-    if (motionOn()) {
-      if (!ctx) {
-        ctx = gsap.context(build);
-        /* the pin has just changed every offset below the hero: regenerate the
-           spine against the pinned geometry, which re-runs drawSpine via the
-           hook, then let ScrollTrigger re-measure everything. */
-        if (spine) spine.rebuild();
-        ScrollTrigger.refresh();
-      }
-    } else if (ctx) {
-      ctx.revert();
-      ctx = null;
-      if (spine) spine.rebuild();
-    }
-  }
-
-  onMotion(applyMotion);
-  applyMotion();
+  ctx = gsap.context(build);
+  /* the pin has just changed every offset below the hero: regenerate the
+     spine against the pinned geometry, which re-runs drawSpine via the
+     hook, then let ScrollTrigger re-measure everything. */
+  if (spine) spine.rebuild();
+  ScrollTrigger.refresh();
 
   window.addEventListener("load", function(){ if (ctx) ScrollTrigger.refresh(); });
 }
