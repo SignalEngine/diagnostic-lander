@@ -1380,13 +1380,21 @@ function choreograph(){
       }, .9)
       .to(".lid", { rotationX: -84, duration: .08, ease: "power1.inOut" }, .92);
 
-    /* fonts settle after DOMContentLoaded; re-measure once if the reader
-       hasn't started the sequence yet */
-    window.addEventListener("load", function(){
-      if (tl.scrollTrigger && tl.scrollTrigger.progress === 0) {
+    /* fonts settle after DOMContentLoaded, and a resize (rotation, window
+       drag) changes every measured value: re-measure whenever the reader
+       hasn't started the sequence yet. Mid-sequence the scrub owns the
+       inline styles, so re-measuring there would corrupt recorded values. */
+    function remeasure(){
+      if (tl.scrollTrigger && tl.scrollTrigger.progress < 0.01) {
         measure();
         tl.invalidate();
       }
+    }
+    window.addEventListener("load", remeasure);
+    var mT = 0;
+    window.addEventListener("resize", function(){
+      clearTimeout(mT);
+      mT = setTimeout(remeasure, 220);
     });
 
     /* -------- the spine draws itself down the page as the reader goes -------- */
