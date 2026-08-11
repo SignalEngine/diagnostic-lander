@@ -307,6 +307,21 @@ p{margin:0 0 1.1rem;max-width:64ch}
   color:var(--accent);
 }
 
+/* ---- the ambience: a fixed WebGL field of drifting motes behind the whole
+   page. JS creates the canvas only if three.js loads AND a context exists;
+   without either the page is the plain ground it always was. ---- */
+#ambience{
+  position:fixed;inset:0;width:100%;height:100%;
+  z-index:-1;pointer-events:none;display:block;
+}
+
+/* ---- a work slot upgraded to live video: sits exactly where the slot's
+   image sits, poster = that image, so nothing shifts either way. ---- */
+.slot-video{
+  position:absolute;inset:0;width:100%;height:100%;display:block;
+  border:0;background:none;
+}
+
 /* ---- the drawing: units of work moving through the stages, and the share of
    them that falls through the gaps between. Canvas, one instance, paused
    when off-screen. ---- */
@@ -314,7 +329,13 @@ p{margin:0 0 1.1rem;max-width:64ch}
   display:none;position:relative;margin-top:2.4rem;
   border-block:1px solid var(--line);padding-block:1rem;
 }
-.diagram canvas{display:block;width:100%;height:clamp(11rem,40vw,16.5rem)}
+.diagram canvas{
+  display:block;width:100%;height:clamp(11rem,40vw,16.5rem);
+  /* the canvas claims taps, holds and horizontal drags; VERTICAL drags stay
+     with the page, so scrolling over the drawing never breaks */
+  touch-action:pan-y;
+  -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;
+}
 
 /* ---- the funnel: real measured numbers, drawn ---- */
 .funnel{margin-top:2.5rem;display:grid;gap:1.4rem}
@@ -1168,6 +1189,14 @@ var leak = (function(){
   var LOSS = [0.433, 0.573, 0.13];
   var st = { open: [1, 1, 1], lit: [1, 1, 1, 1] };
 
+  /* --- hands on the drawing: a pointer inside the canvas splashes the units
+     away (damped spring return), and press-and-hold yawns the nearest gap
+     wider while held. Mouse and touch; vertical scrolling stays with the
+     page via touch-action:pan-y. --- */
+  var ptr = { x: 0, y: 0, on: false, down: false, downAt: 0, glow: 0, hold: 0 };
+  var holdBoost = [0, 0, 0];
+  function eo(i){ return Math.min(1.7, st.open[i] + holdBoost[i]); }
+
   function readTokens(){
     C.accent = rgb(tok("--accent", "#8B5CF6"));
     C.leak   = rgb(tok("--leak",   "#F97316"));
@@ -1216,7 +1245,7 @@ var leak = (function(){
     grid = null;
   }
 
-  function gapW(i){ return (10 * u + 62 * u * LOSS[i]) * st.open[i]; }
+  function gapW(i){ return (10 * u + 62 * u * LOSS[i]) * eo(i); }
 
   function share(seg){
     var s = 1;
@@ -1228,7 +1257,8 @@ var leak = (function(){
     units.push({
       x: -8, y: baseY + (rnd() * 2 - 1) * band,
       v: (W / 5.6) * (0.82 + rnd() * 0.4),
-      vy: 0, fall: false, a: 1, r: (1.5 + rnd() * 0.95) * u, next: 0
+      vy: 0, fall: false, a: 1, r: (1.5 + rnd() * 0.95) * u, next: 0,
+      dx: 0, dy: 0, kx: 0, ky: 0
     });
   }
 
@@ -1239,6 +1269,20 @@ var leak = (function(){
       spawnAcc -= every;
       if (units.length < 340) spawn();
     }
+    /* press-and-hold: the nearest gap widens while held, and eases shut
+       again after the finger lifts */
+    var wantGap = -1;
+    if (ptr.down && performance.now() - ptr.downAt > 160) {
+      wantGap = 0;
+      for (var g = 1; g < 3; g++)
+        if (Math.abs(gapX[g] - ptr.x) < Math.abs(gapX[wantGap] - ptr.x)) wantGap = g;
+    }
+    for (var g2 = 0; g2 < 3; g2++) {
+      var tgt = g2 === wantGap ? 1 : 0;
+      holdBoost[g2] += (tgt - holdBoost[g2]) * Math.min(1, dt * (tgt ? 5 : 2.6));
+    }
+    ptr.glow += ((ptr.on ? 1 : 0) - ptr.glow) * Math.min(1, dt * (ptr.on ? 10 : 5));
+    ptr.hold += ((wantGap >= 0 ? 1 : 0) - ptr.hold) * Math.min(1, dt * 4);
     for (var i = units.length - 1; i >= 0; i--) {
       var p = units[i];
       if (p.fall) {
@@ -1250,8 +1294,26 @@ var leak = (function(){
         continue;
       }
       p.x += p.v * dt;
+      /* the splash: repelled from the pointer, sprung back underdamped so
+         the return has a little bounce in it */
+      if (ptr.on) {
+        var rr = 62 * u;
+        var ddx = (p.x + p.dx) - ptr.x, ddy = (p.y + p.dy) - ptr.y;
+        var d2 = ddx * ddx + ddy * ddy;
+        if (d2 < rr * rr) {
+          var dd = Math.sqrt(d2) || 0.001;
+          var f = 1 - dd / rr;
+          f = f * f * (ptr.down ? 2600 : 1900) * dt;
+          p.kx += (ddx / dd) * f;
+          p.ky += (ddy / dd) * f;
+        }
+      }
+      p.kx += (-70 * p.dx - 6.5 * p.kx) * dt;
+      p.ky += (-70 * p.dy - 6.5 * p.ky) * dt;
+      p.dx += p.kx * dt;
+      p.dy += p.ky * dt;
       while (p.next < 3 && p.x >= gapX[p.next]) {
-        var passed = rnd() > LOSS[p.next] * st.open[p.next];
+        var passed = rnd() > Math.min(0.93, LOSS[p.next] * eo(p.next));
         p.next++;
         if (!passed) {
           p.fall = true;
@@ -1289,7 +1351,7 @@ var leak = (function(){
     }
 
     for (j = 0; j < cuts.length; j++) {
-      var a = cuts[j][0], b = cuts[j][1], op = st.open[cuts[j][2]];
+      var a = cuts[j][0], b = cuts[j][1], op = Math.min(1, eo(cuts[j][2]));
       var gr = ctx.createLinearGradient(0, chBot, 0, H);
       gr.addColorStop(0, "rgba(" + C.leak + "," + (0.16 * op * wash).toFixed(3) + ")");
       gr.addColorStop(0.65, "rgba(" + C.leak + "," + (0.05 * op * wash).toFixed(3) + ")");
@@ -1352,8 +1414,26 @@ var leak = (function(){
       var p = units[i];
       ctx.fillStyle = p.fall ? "rgba(" + C.leak + "," + p.a.toFixed(3) + ")" : flowing;
       ctx.beginPath();
-      ctx.arc(p.x, p.y, p.r, 0, 6.2832);
+      ctx.arc(p.x + p.dx, p.y + p.dy, p.r, 0, 6.2832);
       ctx.fill();
+    }
+
+    /* the contact point: a soft glow under the finger, violet while
+       brushing, warming to the leak orange while a gap is held open */
+    if (ptr.glow > 0.02) {
+      var gr3 = 52 * u * (1 + 0.35 * ptr.hold);
+      var mixc = ptr.hold > 0.5 ? C.leak : C.accent;
+      var cg = ctx.createRadialGradient(ptr.x, ptr.y, 0, ptr.x, ptr.y, gr3);
+      cg.addColorStop(0, "rgba(" + mixc + "," + (0.30 * ptr.glow * wash).toFixed(3) + ")");
+      cg.addColorStop(0.55, "rgba(" + mixc + "," + (0.10 * ptr.glow * wash).toFixed(3) + ")");
+      cg.addColorStop(1, "rgba(" + mixc + ",0)");
+      ctx.fillStyle = cg;
+      ctx.fillRect(ptr.x - gr3, ptr.y - gr3, gr3 * 2, gr3 * 2);
+      ctx.strokeStyle = "rgba(" + mixc + "," + (0.5 * ptr.glow).toFixed(3) + ")";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.arc(ptr.x, ptr.y, 3.2 * u + 1.6 * u * ptr.hold, 0, 6.2832);
+      ctx.stroke();
     }
 
     var maxOpen = Math.max(st.open[0], st.open[1], st.open[2]);
@@ -1421,6 +1501,28 @@ var leak = (function(){
     readTokens();
     paint();
   });
+
+  /* pointer wiring. pan-y (CSS) keeps vertical drags with the page — the
+     browser fires pointercancel and takes the scroll; everything else
+     (brush, tap, hold, horizontal drag) lands here. */
+  function local(e){
+    var r = cv.getBoundingClientRect();
+    ptr.x = e.clientX - r.left;
+    ptr.y = e.clientY - r.top;
+  }
+  cv.addEventListener("pointerenter", function(e){ local(e); ptr.on = true; });
+  cv.addEventListener("pointermove", function(e){ local(e); ptr.on = true; });
+  cv.addEventListener("pointerdown", function(e){
+    local(e); ptr.on = true; ptr.down = true; ptr.downAt = performance.now();
+  });
+  function release(e){
+    ptr.down = false;
+    if (e && e.pointerType !== "mouse") ptr.on = false;
+  }
+  cv.addEventListener("pointerup", release);
+  cv.addEventListener("pointercancel", release);
+  cv.addEventListener("pointerleave", function(){ ptr.on = false; ptr.down = false; });
+  cv.addEventListener("contextmenu", function(e){ e.preventDefault(); });
 
   return {
     progress: function(p){
@@ -1827,6 +1929,72 @@ function choreograph(){
        truth for order and captions; its inline images are hidden only
        under .work-live / .work-seq, so with no script the grid renders
        exactly as authored. -------- */
+    /* -------- video-ready screens. Drop a clip into the repo and the
+       matching Work slot upgrades itself to live video — muted, looping,
+       inline, poster = the existing screenshot — with ZERO code changes.
+       Expected filenames (basename = the figure's screenshot basename;
+       .webm preferred, .mp4 as the fallback probe):
+         work/launchengine.webm|.mp4    work/signalsprint.webm|.mp4
+         work/questlifter.webm|.mp4     work/signalengine.webm|.mp4
+         work/radar.webm|.mp4           work/pipevoice.webm|.mp4
+       Each candidate is probed once with a HEAD request; no file → the
+       probe 404s quietly and the screenshot stays exactly as it is. -------- */
+    var videoProbes = {};
+    function probeVideo(base){
+      if (!videoProbes[base]) videoProbes[base] = new Promise(function(res){
+        var cands = ["work/" + base + ".webm", "work/" + base + ".mp4"], i = 0;
+        (function next(){
+          if (i >= cands.length) return res(null);
+          var url = cands[i++];
+          fetch(url, { method: "HEAD" }).then(function(r){
+            if (r.ok) res(url); else next();
+          }).catch(function(){ next(); });
+        })();
+      });
+      return videoProbes[base];
+    }
+    var vidIO = "IntersectionObserver" in window ? new IntersectionObserver(function(es){
+      for (var i = 0; i < es.length; i++) {
+        var v = es[i].target._video;
+        if (!v) continue;
+        if (es[i].isIntersecting) { var pr = v.play(); if (pr && pr.catch) pr.catch(function(){}); }
+        else v.pause();
+      }
+    }, { threshold: 0.2 }) : null;
+    /* container: the element the video fills (a .work-slide, .screen-ui or
+       .ph-screen). isActive: show-reel slots pass a fn saying whether the
+       slot is on stage right now; seq slots pass null and are play/paused by
+       the IntersectionObserver instead. */
+    function mountVideo(container, fig, fit, isActive){
+      var im = fig.querySelector("img");
+      var m = im && (im.getAttribute("src") || "").match(/([^\/]+)\.(jpe?g|png|webp)$/i);
+      if (!m) return;
+      probeVideo(m[1]).then(function(url){
+        if (!url || !container.isConnected) return;
+        var v = document.createElement("video");
+        v.muted = true; v.loop = true; v.playsInline = true;
+        v.setAttribute("muted", ""); v.setAttribute("playsinline", "");
+        v.preload = "metadata";
+        var srcEl = fig.querySelector("source");
+        v.poster = (srcEl && srcEl.getAttribute("srcset")) || im.src;
+        v.className = "slot-video";
+        v.style.objectFit = fit;
+        if (fit === "cover") v.style.objectPosition = "top center";
+        /* belt and braces: if the file exists but will not decode, drop back
+           to the screenshot */
+        v.addEventListener("error", function(){
+          if (v.parentNode) v.parentNode.removeChild(v);
+          container._video = null;
+        });
+        v.src = url;
+        container.appendChild(v);
+        container._video = v;
+        if (isActive) {
+          if (isActive()) { var pr = v.play(); if (pr && pr.catch) pr.catch(function(){}); }
+        } else if (vidIO) vidIO.observe(container);
+      });
+    }
+
     var workSec = document.querySelector("section.work");
     var mmWork = gsap.matchMedia();
     mmWork.add("(min-width: 62rem)", function workStage(){
@@ -1869,6 +2037,10 @@ function choreograph(){
         stack.appendChild(d);
         return d;
       });
+      figs.forEach(function(f, i){
+        if (!f.classList.contains("w-phone"))
+          mountVideo(slides[i], f, "contain", function(){ return cur === i; });
+      });
 
       /* the phone: authored chrome (CSS only), the portrait shot clipped on
          its screen. Hidden until its product's caption arrives. */
@@ -1888,6 +2060,7 @@ function choreograph(){
         }
         phone.appendChild(phs);
         stage.appendChild(phone);
+        mountVideo(phs, phFig, "cover", function(){ return phoneOn; });
       }
 
       workSec.classList.add("work-live");
@@ -1899,6 +2072,8 @@ function choreograph(){
       function setPhone(on){
         if (!phone || on === phoneOn) return;
         phoneOn = on;
+        var pv = phone.querySelector("video");
+        if (pv) { if (on) { var pp = pv.play(); if (pp && pp.catch) pp.catch(function(){}); } else pv.pause(); }
         if (on) {
           /* The laptop YIELDS entirely. Dimming it to 30% left a full-size
              empty laptop behind the phone, which read as the phone colliding
@@ -1925,6 +2100,11 @@ function choreograph(){
         gsap.fromTo(slides[i],
           { autoAlpha: 0, xPercent: 11 * dir },
           { autoAlpha: 1, xPercent: 0, duration: .5, ease: "expo.out", overwrite: true });
+        slides.forEach(function(s, k){
+          if (!s._video) return;
+          if (k === i) { var vp = s._video.play(); if (vp && vp.catch) vp.catch(function(){}); }
+          else s._video.pause();
+        });
         setPhone(figs[i].classList.contains("w-phone"));
       }
       figs.forEach(function(f, i){
@@ -1980,6 +2160,9 @@ function choreograph(){
         if (im2) im2.removeAttribute("loading");
         f.insertBefore(frame, f.firstChild);
         added.push(frame);
+        var isPh = f.classList.contains("w-phone");
+        mountVideo(frame.querySelector(isPh ? ".ph-screen" : ".screen-ui"), f,
+                   isPh ? "cover" : "contain", null);
         gsap.fromTo(f, { autoAlpha: 0, y: 46, scale: .984 }, {
           autoAlpha: 1, y: 0, scale: 1, duration: 1.05, ease: "expo.out",
           scrollTrigger: { trigger: f, start: "top 88%", once: true }
@@ -2151,6 +2334,198 @@ if (document.readyState === "loading") {
 } else {
   choreograph();
 }
+})();
+</script>
+
+<script type="module">
+/* ===========================================================================
+   The ambience. A fixed WebGL field behind the whole page: sparse violet
+   motes and a few broad soft wisps drifting on the ink ground, layered in
+   real depth so scrolling parallaxes them at different rates, tilting gently
+   with the pointer, and warming toward the leak orange while the proof beat
+   is in view. three.js, version pinned. Enhancement only, three ways down:
+   the import fails → nothing; WebGL is unavailable → nothing; the context
+   dies later → the canvas is removed. Every path leaves the page exactly as
+   it was: plain ground, full function. It never touches scroll.
+   =========================================================================== */
+(async function(){
+  var THREE;
+  try {
+    THREE = await import("https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.min.js");
+  } catch (e) { return; }
+
+  var canvas = document.createElement("canvas");
+  canvas.id = "ambience";
+  canvas.setAttribute("aria-hidden", "true");
+  /* quiet precheck before three touches anything: no context, no layer,
+     no console noise */
+  var probeGL = canvas.getContext("webgl2") || canvas.getContext("webgl");
+  if (!probeGL) return;
+  var renderer;
+  try {
+    renderer = new THREE.WebGLRenderer({
+      canvas: canvas, alpha: true, antialias: false,
+      powerPreference: "low-power"
+    });
+  } catch (e) { return; } /* no WebGL: no layer, plain ground */
+
+  var DPR = Math.min(window.devicePixelRatio || 1, 2);
+  renderer.setPixelRatio(DPR);
+  renderer.setClearColor(0x000000, 0);
+
+  var scene = new THREE.Scene();
+  var camera = new THREE.PerspectiveCamera(58, 1, 1, 120);
+  camera.position.z = 34;
+
+  /* the field: N small motes + NW broad dim wisps, spread through a depth
+     range so near ones parallax hard and far ones barely move. Positions are
+     deterministic — same sky every load. */
+  var SPAN = 46, N = 640, NW = 54, total = N + NW;
+  var pos = new Float32Array(total * 3);
+  var rand = new Float32Array(total * 3);
+  var size = new Float32Array(total);
+  var kind = new Float32Array(total);
+  var seed = 24601;
+  function rnd(){ seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; }
+  for (var i = 0; i < total; i++) {
+    var wisp = i >= N;
+    pos[i * 3]     = (rnd() * 2 - 1) * 46;
+    pos[i * 3 + 1] = (rnd() * 2 - 1) * (SPAN / 2);
+    pos[i * 3 + 2] = -26 + rnd() * 48;
+    rand[i * 3] = rnd(); rand[i * 3 + 1] = rnd(); rand[i * 3 + 2] = rnd();
+    size[i] = wisp ? 7 + rnd() * 9 : 0.55 + rnd() * 1.5;
+    kind[i] = wisp ? 1 : 0;
+  }
+  var geo = new THREE.BufferGeometry();
+  geo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+  geo.setAttribute("aRand", new THREE.BufferAttribute(rand, 3));
+  geo.setAttribute("aSize", new THREE.BufferAttribute(size, 1));
+  geo.setAttribute("aKind", new THREE.BufferAttribute(kind, 1));
+
+  var uni = {
+    uTime:   { value: 0 },
+    uScroll: { value: 0 },
+    uTilt:   { value: new THREE.Vector2(0, 0) },
+    uWarm:   { value: 0 },
+    uDPR:    { value: DPR },
+    uColA:   { value: new THREE.Color("#8B5CF6") },
+    uColB:   { value: new THREE.Color("#F97316") },
+    uGain:   { value: 1 }
+  };
+  var mat = new THREE.ShaderMaterial({
+    uniforms: uni,
+    transparent: true, depthWrite: false, depthTest: false,
+    blending: THREE.AdditiveBlending,
+    vertexShader:
+      "attribute vec3 aRand;\n" +
+      "attribute float aSize;\n" +
+      "attribute float aKind;\n" +
+      "uniform float uTime, uScroll, uDPR;\n" +
+      "uniform vec2 uTilt;\n" +
+      "varying float vDepth, vTint, vKind;\n" +
+      "void main(){\n" +
+      "  vec3 p = position;\n" +
+      "  float depth = clamp((p.z + 26.0) / 48.0, 0.0, 1.0);\n" +
+      "  p.x += sin(uTime * (0.05 + aRand.x * 0.06) + aRand.y * 6.2832) * (1.6 + aRand.z * 2.6);\n" +
+      "  p.y += cos(uTime * (0.04 + aRand.y * 0.05) + aRand.x * 6.2832) * (1.2 + aRand.x * 2.2);\n" +
+      "  float span = 46.0;\n" +
+      "  p.y = mod(p.y + uScroll * mix(0.18, 1.0, depth) + span * 0.5, span) - span * 0.5;\n" +
+      "  p.x += uTilt.x * mix(0.6, 3.4, depth);\n" +
+      "  p.y += uTilt.y * mix(0.4, 2.4, depth);\n" +
+      "  vec4 mv = modelViewMatrix * vec4(p, 1.0);\n" +
+      "  float ps = aSize * uDPR * (150.0 / -mv.z);\n" +
+      "  gl_PointSize = clamp(ps, 1.5 * uDPR, mix(24.0, 130.0, aKind) * uDPR);\n" +
+      "  vDepth = depth; vTint = aRand.z; vKind = aKind;\n" +
+      "  gl_Position = projectionMatrix * mv;\n" +
+      "}",
+    fragmentShader:
+      "precision mediump float;\n" +
+      "varying float vDepth, vTint, vKind;\n" +
+      "uniform vec3 uColA, uColB;\n" +
+      "uniform float uWarm, uGain;\n" +
+      "void main(){\n" +
+      "  vec2 c = gl_PointCoord - 0.5;\n" +
+      "  float d = length(c) * 2.0;\n" +
+      "  if (d > 1.0) discard;\n" +
+      "  float fall = 1.0 - d;\n" +
+      "  float glow = fall * fall;\n" +
+      "  float core = pow(fall, 5.0);\n" +
+      "  float warm = uWarm * (0.45 + 0.55 * vTint);\n" +
+      "  vec3 col = mix(uColA, uColB, warm);\n" +
+      "  float a = vKind > 0.5\n" +
+      "    ? glow * 0.075 * (0.4 + 0.6 * vDepth)\n" +
+      "    : (glow * 0.55 + core * 0.65) * (0.30 + 0.70 * vDepth) * 0.9;\n" +
+      "  gl_FragColor = vec4(col + vec3(0.10, 0.08, 0.12) * core * (1.0 - vKind), a * uGain);\n" +
+      "}"
+  });
+  var pts = new THREE.Points(geo, mat);
+  pts.frustumCulled = false;
+  scene.add(pts);
+  document.body.appendChild(canvas);
+
+  /* light theme: additive violet vanishes on a bright ground, so switch to
+     normal blending with the deep light-theme hues, quieter */
+  var mqLight = window.matchMedia("(prefers-color-scheme: light)");
+  function applyTheme(){
+    var forced = document.documentElement.getAttribute("data-theme");
+    var light = forced ? forced === "light" : mqLight.matches;
+    mat.blending = light ? THREE.NormalBlending : THREE.AdditiveBlending;
+    mat.needsUpdate = true;
+    uni.uColA.value.set(light ? "#5B21B6" : "#8B5CF6");
+    uni.uColB.value.set(light ? "#9A3412" : "#F97316");
+    uni.uGain.value = light ? 0.55 : 1;
+  }
+  applyTheme();
+  if (mqLight.addEventListener) mqLight.addEventListener("change", applyTheme);
+
+  var proof = document.getElementById("proof");
+  var tx = 0, ty = 0, tiltX = 0, tiltY = 0, warm = 0;
+  window.addEventListener("pointermove", function(e){
+    tx = (e.clientX / window.innerWidth) * 2 - 1;
+    ty = -((e.clientY / window.innerHeight) * 2 - 1);
+  }, { passive: true });
+
+  function resize(){
+    DPR = Math.min(window.devicePixelRatio || 1, 2);
+    renderer.setPixelRatio(DPR);
+    uni.uDPR.value = DPR;
+    renderer.setSize(window.innerWidth, window.innerHeight, false);
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+  }
+  resize();
+  window.addEventListener("resize", resize);
+
+  var running = false, raf = 0, t0 = performance.now();
+  function frame(now){
+    uni.uTime.value = (now - t0) / 1000;
+    uni.uScroll.value = window.scrollY * 0.012;
+    tiltX += (tx - tiltX) * 0.04;
+    tiltY += (ty - tiltY) * 0.04;
+    uni.uTilt.value.set(tiltX, tiltY);
+    var target = 0;
+    if (proof) {
+      var r = proof.getBoundingClientRect();
+      var vh = window.innerHeight;
+      var overlap = Math.min(r.bottom, vh) - Math.max(r.top, 0);
+      target = Math.max(0, Math.min(1, overlap / (vh * 0.55)));
+    }
+    warm += (target - warm) * 0.035;
+    uni.uWarm.value = warm;
+    renderer.render(scene, camera);
+    if (running) raf = requestAnimationFrame(frame);
+  }
+  function start(){ if (running) return; running = true; raf = requestAnimationFrame(frame); }
+  function stop(){ running = false; if (raf) cancelAnimationFrame(raf); raf = 0; }
+  document.addEventListener("visibilitychange", function(){
+    if (document.hidden) stop(); else start();
+  });
+  canvas.addEventListener("webglcontextlost", function(ev){
+    ev.preventDefault();
+    stop();
+    if (canvas.parentNode) canvas.parentNode.removeChild(canvas);
+  });
+  start();
 })();
 </script>
 
