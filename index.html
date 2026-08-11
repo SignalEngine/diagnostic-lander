@@ -329,11 +329,25 @@ p{margin:0 0 1.1rem;max-width:64ch}
 .caption{margin-top:1.6rem;color:var(--ink-3);font-size:.92rem;max-width:56ch}
 .caption a{color:var(--ink-2)}
 
-/* ---- the usual suspects: designed rows, native disclosure ---- */
-.trades{margin-top:.5rem;border-top:1px solid var(--line)}
-details{border-bottom:1px solid var(--line)}
+/* ---- the usual suspects: case files. Each disclosure is a folder — a
+   closed tab along the top edge, and the contents flip open from under it
+   (the flip itself is a JS enhancement on the native toggle). ---- */
+.trades{margin-top:2rem;display:grid;gap:.95rem}
+details{
+  position:relative;border:1px solid var(--line);
+  border-radius:0 10px 10px 10px;background:var(--raised);
+  perspective:900px;
+}
+details::before{ /* the folder tab */
+  content:"";position:absolute;top:-9px;left:-1px;width:6.5rem;height:9px;
+  background:var(--raised);border:1px solid var(--line);border-bottom:0;
+  border-radius:6px 12px 0 0;
+  transition:border-color .2s ease;
+}
+details[open]{border-color:color-mix(in srgb,var(--accent) 42%,var(--line))}
+details[open]::before{border-color:color-mix(in srgb,var(--accent) 42%,var(--line))}
 summary{
-  cursor:pointer;list-style:none;padding:1.1rem 2rem 1.1rem 0;position:relative;
+  cursor:pointer;list-style:none;padding:1.05rem 2.7rem 1.05rem 1.1rem;position:relative;
   font-size:clamp(1.05rem,1rem + 0.5vw,1.3rem);font-family:var(--serif);
   display:flex;align-items:center;gap:1rem;
 }
@@ -351,14 +365,14 @@ details[open] summary .t-icon,summary:hover .t-icon{
 }
 summary::-webkit-details-marker{display:none}
 summary::after{
-  content:"";position:absolute;right:.35rem;top:50%;width:.7rem;height:.7rem;
+  content:"";position:absolute;right:1.1rem;top:50%;width:.7rem;height:.7rem;
   border-right:1.5px solid var(--ink-3);border-bottom:1.5px solid var(--ink-3);
   transform:translateY(-70%) rotate(45deg);transition:transform .2s cubic-bezier(.2,.7,.3,1);
 }
 details[open] summary::after{transform:translateY(-30%) rotate(-135deg)}
 summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-details p{padding:0 0 1.3rem 3.6rem;color:var(--ink-2);margin:0;max-width:60ch}
-@media (max-width:30rem){details p{padding-left:0}}
+details p{padding:.1rem 1.25rem 1.3rem 4.7rem;color:var(--ink-2);margin:0;max-width:60ch;transform-origin:50% 0}
+@media (max-width:30rem){details p{padding-left:1.1rem}}
 .catch{margin-top:1.6rem;color:var(--ink-2)}
 
 /* ---- offer ---- */
@@ -421,6 +435,55 @@ figcaption{color:var(--ink-3);font-size:.92rem;max-width:58ch}
   .w-pipe{grid-column:3/11}
   .w-phone img{max-width:100%}
 }
+
+/* ---- work, live mode: the hero's laptop returns as a fixed frame and the
+   captions scroll past it, each one putting its product on the screen.
+   Everything here is scoped to .work-live, which only JS adds — with no
+   script the grid above stays exactly as authored. ---- */
+.work-stage{display:none}
+.work-live .work-stage{
+  display:block;position:sticky;top:0;z-index:2;align-self:start;
+  background:var(--ground);padding-top:clamp(.5rem,2.5vh,1.25rem);padding-bottom:1.1rem;
+}
+.work-live .work-stage .laptop{width:min(30rem,100%);margin-inline:auto}
+.shot-stack{position:absolute;inset:0;z-index:1}
+.work-slide{position:absolute;inset:2.6%;opacity:0;visibility:hidden}
+.work-slide picture{position:absolute;inset:0;display:block}
+.work-slide img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;display:block}
+.work-live .work-grid{display:block;margin-top:1.9rem}
+.work-live .work-grid figure{min-height:36vh;display:grid;align-content:center;margin:0}
+.work-live .work-grid picture,.work-live .work-grid .shot-panel{display:none}
+@media (min-width:62rem){
+  .work-live .work-body{
+    display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+    gap:clamp(1.5rem,3vw,3rem);align-items:start;margin-top:2.5rem;
+  }
+  .work-live .work-stage{top:calc(50vh - 12rem)}
+  .work-live .work-grid{margin-top:0}
+  .work-live .work-grid figure{min-height:56vh}
+}
+
+/* ---- the report types itself: caret + accessibility plumbing ---- */
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+.type-line{display:inline}
+.type-line .word{display:inline-block}
+.type-caret{
+  position:absolute;width:2px;background:var(--accent);
+  animation:caret-blink .85s steps(1) infinite;pointer-events:none;
+}
+@keyframes caret-blink{0%,100%{opacity:1}50%{opacity:0}}
+
+/* ---- the circuit completes: the spine's tip lights the final button ---- */
+.cta.lit{
+  border-color:var(--btn-edge);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.22),
+    0 0 0 1px color-mix(in srgb,var(--btn-edge) 60%,transparent),
+    0 0 38px 2px color-mix(in srgb,var(--accent) 50%,transparent),
+    0 10px 30px -10px color-mix(in srgb,var(--btn) 72%,transparent),
+    0 2px 6px rgba(0,0,0,.28);
+}
+
 footer{padding-block:3rem 4rem;color:var(--ink-3);font-size:.92rem}
 footer a{color:var(--ink-2)}
 a{color:var(--accent-text)}
@@ -792,8 +855,8 @@ a{color:var(--accent-text)}
     </div>
   </section>
 
-  <section class="beat">
-    <a class="cta" href="mailto:jamesataylor1@gmail.com?subject=Diagnostic%20-%2015%20minute%20call">
+  <section class="beat" id="finale">
+    <a class="cta" id="cta-final" href="mailto:jamesataylor1@gmail.com?subject=Diagnostic%20-%2015%20minute%20call">
       Book a 15-minute call
       <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M2 8h11M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
     </a>
@@ -943,13 +1006,31 @@ var spine = (function(){
     }
 
     var m = "";
+    /* the orange strand runs the FULL length of the spine, in lockstep with
+       the violet — quiet where the violet carries the story, and it swells
+       (via a page-length gradient plus an emphasis stroke) through the proof
+       beat, where the loss IS the story. It never dies while the violet
+       continues. */
+    var fo = function(y){ return Math.max(0, Math.min(1, y / docH)).toFixed(4); };
+    m += '<defs><linearGradient id="leak-run" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2="' + docH + '">' +
+         '<stop offset="0" stop-opacity=".34" style="stop-color:var(--leak)"/>' +
+         '<stop offset="' + fo(yProof - 60) + '" stop-opacity=".34" style="stop-color:var(--leak)"/>' +
+         '<stop offset="' + fo(yProof + 80) + '" stop-opacity=".92" style="stop-color:var(--leak)"/>' +
+         '<stop offset="' + fo(proofEnd - 60) + '" stop-opacity=".92" style="stop-color:var(--leak)"/>' +
+         '<stop offset="' + fo(proofEnd + 220) + '" stop-opacity=".34" style="stop-color:var(--leak)"/>' +
+         '<stop offset="1" stop-opacity=".34" style="stop-color:var(--leak)"/>' +
+         '</linearGradient></defs>';
     for (var i = 0; i < strands.length; i++) {
       m += '<path class="sp-strand" d="' + pathFor(strands[i], y0, y1) + '" fill="none"' +
            ' stroke="currentColor" stroke-width="' + strands[i].w + '" opacity="' + strands[i].o + '"/>';
     }
-    /* orange over the proof beat: the leak-relevant stretch of the line */
-    m += '<path class="sp-leak" d="' + pathFor(strands[0], yProof + 10, proofEnd) + '" fill="none"' +
-         ' style="stroke:var(--leak)" stroke-width="1.6" opacity="0.6"/>';
+    var leakStrand = { a: A, p: 2.2, o: 1, w: 1.1 };
+    m += '<path class="sp-leak" d="' + pathFor(leakStrand, y0, y1) + '" fill="none"' +
+         ' stroke="url(#leak-run)" stroke-width="1.1"/>';
+    /* the emphasis stroke: the same orange strand, thickened across the
+       proof beat only */
+    m += '<path class="sp-leak" d="' + pathFor(leakStrand, yProof + 10, proofEnd) + '" fill="none"' +
+         ' style="stroke:var(--leak)" stroke-width="1.7" opacity="0.55"/>';
 
     /* a node where each beat begins */
     var beats = document.querySelectorAll("section.beat, footer");
@@ -960,6 +1041,27 @@ var spine = (function(){
       m += '<circle cx="' + xAt(by, strands[0]).toFixed(1) + '" cy="' + by + '" r="3.2"' +
            ' fill="var(--ground)" style="stroke:' + (isProof ? "var(--leak)" : "var(--accent)") + '"' +
            ' stroke-width="1.5" opacity=".9"/>';
+    }
+    /* the circuit completes: a branch leaves the gutter lane and runs into
+       the final CTA button; its draw-on (and the button's lit state) live in
+       the GSAP layer. With no script there is no spine at all. */
+    var ctaBtn = document.getElementById("cta-final");
+    if (ctaBtn) {
+      /* layout position via the offset chain: immune to the beat-reveal
+         transform (y:46) that sits on un-revealed sections at measure time */
+      var ox = 0, oy = 0, oe = ctaBtn;
+      while (oe) { ox += oe.offsetLeft; oy += oe.offsetTop; oe = oe.offsetParent; }
+      var byc = oy + ctaBtn.offsetHeight / 2;
+      var bxc = Math.round(ox) - 9;
+      var sy = Math.round(byc - Math.max(160, window.innerHeight * 0.22));
+      var sx = xAt(sy, strands[0]);
+      m += '<path class="sp-cta" d="M' + sx.toFixed(1) + ' ' + sy +
+           ' C ' + sx.toFixed(1) + ' ' + Math.round(byc - 34) + ', ' +
+           Math.max(sx, bxc - 56).toFixed(1) + ' ' + Math.round(byc) + ', ' +
+           bxc + ' ' + Math.round(byc) + '"' +
+           ' fill="none" stroke="currentColor" stroke-width="1.6" opacity=".8"/>';
+      m += '<circle class="sp-cta-dot" cx="' + bxc + '" cy="' + Math.round(byc) + '" r="2.7"' +
+           ' fill="var(--accent)" opacity="0"/>';
     }
     svg.innerHTML = m;
     geom.built = true;
@@ -1336,7 +1438,7 @@ function choreograph(){
     var lapArea = document.querySelector(".laptop-area");
     var clipEl = document.querySelector(".stage-clip");
 
-    gsap.set(".lid", { rotationX: 0 });
+    gsap.set(".hero-stage .lid", { rotationX: 0 });
 
     /* the copy that rides the screen through the close is a clone with the
        hero copy's width — identical styles, identical wrapping. It stays
@@ -1367,8 +1469,8 @@ function choreograph(){
       clipEl.style.left = clipEl.style.right = (-inset) + "px";
       gsap.set(shrinkEl, { scale: 1, x: 0, y: 0 });
       gsap.set(lapArea, { scale: 1, x: 0, y: 0 });
-      gsap.set(".zoom", { scale: 1, y: 0 });
-      gsap.set(".lid", { rotationX: 0 });
+      gsap.set(".hero-stage .zoom", { scale: 1, y: 0 });
+      gsap.set(".hero-stage .lid", { rotationX: 0 });
       gsap.set(screenCopy, { scale: 1 });
       screenCopy.style.width = copyEl.clientWidth + "px";
       var k = Math.min(
@@ -1415,8 +1517,8 @@ function choreograph(){
       .set(copyEl, { autoAlpha: 0 }, .46)
       .set(screenCopy, { autoAlpha: 1 }, .46)
       /* held ~.46–.58: the laptop at rest, the page live on its screen */
-      .to(".lid", { rotationX: -84, duration: .26, ease: "power1.inOut" }, .58)
-      .to(".zoom", {
+      .to(".hero-stage .lid", { rotationX: -84, duration: .26, ease: "power1.inOut" }, .58)
+      .to(".hero-stage .zoom", {
         scale: .48,
         y: function(){ return window.innerHeight * .3; },
         duration: .22, ease: "power1.inOut"
@@ -1451,6 +1553,27 @@ function choreograph(){
           var len = p.getTotalLength();
           if (!len) return;
           gsap.set(p, { strokeDasharray: len + " " + len, strokeDashoffset: len });
+          if (p.getAttribute("class") === "sp-cta") {
+            /* the branch into the button: scrubbed draw-on; the button only
+               lights when the tip actually arrives, and unlights on the way
+               back up. */
+            var btn = document.getElementById("cta-final");
+            var dot = spine.el.querySelector(".sp-cta-dot");
+            spineTweens.push(gsap.to(p, {
+              strokeDashoffset: 0, ease: "none",
+              scrollTrigger: {
+                trigger: "#finale", start: "top 82%",
+                endTrigger: "footer", end: "bottom bottom", scrub: 0.4,
+                onUpdate: function(sf){
+                  var on = sf.progress > 0.96;
+                  if (btn) btn.classList.toggle("lit", on);
+                  if (dot) dot.style.opacity = on ? "0.9" : "0";
+                },
+                onLeave: function(){ if (btn) btn.classList.add("lit"); if (dot) dot.style.opacity = "0.9"; }
+              }
+            }));
+            return;
+          }
           if (p.getAttribute("class") === "sp-leak") {
             /* the orange strand draws in lockstep with the lead violet
                strand: same trigger, same scrub, and a sampled ease that
@@ -1523,9 +1646,76 @@ function choreograph(){
       scrollTrigger: { trigger: ".funnel", start: "top 84%", once: true }
     });
 
-    gsap.fromTo(".offer li", { opacity: 0, x: -16 }, {
-      opacity: 1, x: 0, duration: 0.7, ease: "expo.out", stagger: 0.065,
-      scrollTrigger: { trigger: ".offer", start: "top 82%", once: true }
+    /* -------- the report writes itself: the five deliverable lines type on,
+       sequentially, with a caret on the active line. Before the trigger (and
+       with no script at all) the bullets are the plain, fully visible text —
+       nothing is hidden until the moment the typing starts. Words are
+       inline-block so the wrap points never move while characters appear;
+       a visually-hidden copy keeps each line a real sentence for a screen
+       reader; each line's DOM is restored to plain text the moment it
+       finishes. -------- */
+    var typeRestores = [];
+    ScrollTrigger.create({
+      trigger: ".offer", start: "top 78%", once: true,
+      onEnter: function(){
+        var lines = gsap.utils.toArray(".offer li > span");
+        if (!lines.length) return;
+        var caret = document.createElement("i");
+        caret.className = "type-caret";
+        caret.setAttribute("aria-hidden", "true");
+        var ttl = gsap.timeline();
+        lines.forEach(function(spanEl){
+          var text = spanEl.textContent;
+          var sr = document.createElement("span");
+          sr.className = "sr-only"; sr.textContent = text;
+          var live = document.createElement("span");
+          live.className = "type-line"; live.setAttribute("aria-hidden", "true");
+          var chars = [];
+          var parts = text.split(/(\s+)/);
+          for (var pi = 0; pi < parts.length; pi++) {
+            if (!parts[pi]) continue;
+            if (/^\s+$/.test(parts[pi])) { live.appendChild(document.createTextNode(parts[pi])); continue; }
+            var w = document.createElement("span"); w.className = "word";
+            for (var ci = 0; ci < parts[pi].length; ci++) {
+              var c = document.createElement("span");
+              c.textContent = parts[pi][ci];
+              c.style.visibility = "hidden";
+              w.appendChild(c); chars.push(c);
+            }
+            live.appendChild(w);
+          }
+          var restore = function(){ spanEl.textContent = text; };
+          typeRestores.push(restore);
+          var host = spanEl.parentNode; /* the <li> */
+          function placeCaret(tip){
+            var hr2 = host.getBoundingClientRect();
+            var tr = tip.getBoundingClientRect();
+            caret.style.left = (tr.right - hr2.left + 1) + "px";
+            caret.style.top = (tr.top - hr2.top + tr.height * 0.08) + "px";
+            caret.style.height = (tr.height * 0.84) + "px";
+          }
+          ttl.call(function(){
+            spanEl.textContent = "";
+            spanEl.appendChild(sr); spanEl.appendChild(live);
+            host.style.position = "relative";
+            host.appendChild(caret);
+            if (chars.length) placeCaret(chars[0]);
+          });
+          var proxy = { n: 0 };
+          ttl.to(proxy, {
+            n: chars.length, ease: "none",
+            duration: Math.max(.5, chars.length * 0.014),
+            onUpdate: function(){
+              var upto = Math.round(proxy.n);
+              for (var k = 0; k < chars.length; k++)
+                chars[k].style.visibility = k < upto ? "visible" : "hidden";
+              if (upto > 0) placeCaret(chars[Math.min(upto, chars.length) - 1]);
+            }
+          }, "+=0.1");
+          ttl.call(restore);
+        });
+        ttl.call(function(){ if (caret.parentNode) caret.parentNode.removeChild(caret); });
+      }
     });
 
     /* the section headings fill, word by word, at the reader's own pace */
@@ -1568,6 +1758,99 @@ function choreograph(){
       });
     }
 
+    /* -------- the laptop returns as the Work frame: the hero's laptop
+       artwork, cloned, sits fixed (sticky) while the grid's captions scroll
+       past; each caption arriving puts its product's screenshot on the
+       screen face. The authored grid stays the source of truth for order
+       and captions; its inline images are hidden only under .work-live, so
+       with no script the grid renders exactly as authored. -------- */
+    var workSec = document.querySelector("section.work");
+    (function workStage(){
+      var grid = workSec && workSec.querySelector(".work-grid");
+      var heroLap = document.querySelector(".hero-stage .laptop");
+      if (!grid || !heroLap) return;
+      var figs = gsap.utils.toArray(grid.querySelectorAll("figure"));
+      if (!figs.length) return;
+
+      var body = document.createElement("div");
+      body.className = "work-body";
+      grid.parentNode.insertBefore(body, grid);
+      var stage = document.createElement("div");
+      stage.className = "work-stage";
+      stage.setAttribute("aria-hidden", "true");
+      var lap = heroLap.cloneNode(true);
+      var sc2 = lap.querySelector(".screen-copy");
+      if (sc2) sc2.parentNode.removeChild(sc2);
+      var lid2 = lap.querySelector(".lid");
+      if (lid2) lid2.style.transform = "";
+      stage.appendChild(lap);
+      body.appendChild(stage);
+      body.appendChild(grid);
+
+      var ui2 = lap.querySelector(".screen-ui");
+      var stack = document.createElement("div");
+      stack.className = "shot-stack";
+      ui2.appendChild(stack);
+      var slides = figs.map(function(f){
+        var d = document.createElement("div");
+        d.className = "work-slide";
+        var pic = f.querySelector("picture");
+        if (pic) {
+          d.appendChild(pic.cloneNode(true));
+          var im = d.querySelector("img");
+          if (im) im.removeAttribute("loading");
+        }
+        stack.appendChild(d);
+        return d;
+      });
+
+      workSec.classList.add("work-live");
+
+      var cur = -1;
+      function activate(i){
+        if (i === cur || !slides[i]) return;
+        var dir = i > cur ? 1 : -1, prev = cur;
+        cur = i;
+        if (prev >= 0) gsap.to(slides[prev], {
+          autoAlpha: 0, xPercent: -9 * dir, duration: .3, ease: "power2.out", overwrite: true
+        });
+        gsap.fromTo(slides[i],
+          { autoAlpha: 0, xPercent: 11 * dir },
+          { autoAlpha: 1, xPercent: 0, duration: .5, ease: "expo.out", overwrite: true });
+      }
+      figs.forEach(function(f, i){
+        ScrollTrigger.create({
+          trigger: f, start: "top 64%", end: "bottom 64%",
+          onToggle: function(sf2){ if (sf2.isActive) activate(i); }
+        });
+      });
+      activate(0);
+    })();
+
+    /* -------- suspects as case files: the native toggle stays exactly as it
+       is (keyboard included); opening one adds a ~300ms folder-flip on the
+       revealed contents. Opening or closing one also changes the document's
+       height, which strands every measured position below it — the spine's
+       geometry and every trigger are re-measured once the flip settles. -------- */
+    var relayoutT = 0;
+    function relayout(){
+      clearTimeout(relayoutT);
+      relayoutT = setTimeout(function(){
+        if (spine) spine.rebuild();
+        ScrollTrigger.refresh();
+      }, 400);
+    }
+    document.querySelectorAll(".trades details").forEach(function(d){
+      var body2 = d.querySelector("p");
+      if (!body2) return;
+      d.addEventListener("toggle", function(){
+        if (d.open) gsap.fromTo(body2,
+          { rotationX: -55, autoAlpha: 0, y: -6 },
+          { rotationX: 0, autoAlpha: 1, y: 0, duration: .3, ease: "expo.out", overwrite: true });
+        relayout();
+      });
+    });
+
     /* revert cannot know what a text node said, remove a class, or un-hook a
        module — all three are undone here. */
     return function(){
@@ -1575,6 +1858,8 @@ function choreograph(){
       if (screenCopy.parentNode) screenCopy.parentNode.removeChild(screenCopy);
       if (spine) spine.onRebuild(null);
       settle();
+      typeRestores.forEach(function(r){ r(); });
+      if (workSec) workSec.classList.remove("work-live");
     };
   }
 
