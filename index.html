@@ -127,6 +127,28 @@ p{margin:0 0 1.1rem;max-width:64ch}
 }
 .diagram canvas{display:block;width:100%;height:clamp(11rem,40vw,16.5rem)}
 
+/* ---- the motion switch. It sits under the drawing because that is the thing
+   a reader can see is holding still, and it is drawn at caption weight in the
+   page's own hairline-and-ink-3 language: no new colour, no surface, no
+   shadow. The state word is width-locked so pressing it cannot reflow the
+   line. Hidden until JS claims it — with no script it would do nothing. ---- */
+.motion{
+  margin-top:.95rem;display:inline-flex;align-items:center;gap:.55rem;
+  padding:.4rem .75rem;border:1px solid var(--line);border-radius:2px;
+  background:none;color:var(--ink-3);
+  font-family:inherit;font-size:.92rem;line-height:1.3;
+  cursor:pointer;-webkit-appearance:none;appearance:none;
+}
+.motion[hidden]{display:none}
+.motion:hover{color:var(--ink-2);border-color:var(--ink-3)}
+.motion:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.motion .dot{
+  width:.5rem;height:.5rem;flex:none;border-radius:50%;
+  border:1px solid currentColor;
+}
+.motion[aria-pressed="true"] .dot{background:currentColor}
+.motion .state{min-width:6.4ch;text-align:left}
+
 /* ---- the funnel: his real measured numbers, drawn. Not three stat cards. ---- */
 .funnel{margin-top:2.5rem;display:grid;gap:1.4rem}
 .step{display:grid;gap:.55rem}
@@ -261,6 +283,11 @@ a{color:var(--accent)}
       <canvas id="leak" role="img"
         aria-label="Work entering from the left and moving through four stages, with a share of it falling through the gaps between the stages and dropping away."></canvas>
     </div>
+
+    <button class="motion" type="button" id="motion" aria-pressed="false" hidden>
+      <span class="dot" aria-hidden="true"></span>
+      <span>Motion <span class="state">off</span></span>
+    </button>
 
     <div class="funnel">
       <div class="step rise">
@@ -476,6 +503,45 @@ a{color:var(--accent)}
 
 var REDUCE = window.matchMedia("(prefers-reduced-motion: reduce)");
 var root = document.documentElement;
+
+function addL(mq, fn){
+  if (mq.addEventListener) mq.addEventListener("change", fn); else mq.addListener(fn);
+}
+
+/* ===========================================================================
+   0. Whether anything is allowed to move.
+
+   The OS decides by default, and under `reduce` nothing starts: no rAF, no
+   timelines. A stored choice overrides that in EITHER direction, because the
+   OS flag is not always a statement about motion — Samsung's "Remove
+   animations" is switched on by battery saver, so a reader can be handed
+   `reduce` without ever asking for it. WCAG 2.3.3 requires that motion can be
+   turned OFF; it does not require that a reader be prevented from turning it
+   on. So: opt out is honoured by default, opt in is available on request.
+
+   Storage THROWS rather than returning null when it is blocked (private mode,
+   third-party-cookie rules), and this script is the whole of the page's
+   enhancement — an unguarded read here would take the drawing down with it.
+   =========================================================================== */
+var MOTION_KEY = "diagnostic:motion";
+var motionChoice = null;                      /* "on" | "off" | null = defer to OS */
+try {
+  var stored = localStorage.getItem(MOTION_KEY);
+  if (stored === "on" || stored === "off") motionChoice = stored;
+} catch (e) {}
+
+function motionOn(){ return motionChoice ? motionChoice === "on" : !REDUCE.matches; }
+
+var motionSubs = [];
+function onMotion(fn){ motionSubs.push(fn); }
+function emitMotion(){ for (var i = 0; i < motionSubs.length; i++) motionSubs[i](); }
+function setMotion(on){
+  motionChoice = on ? "on" : "off";
+  try { localStorage.setItem(MOTION_KEY, motionChoice); } catch (e) {}
+  emitMotion();
+}
+/* an OS change still lands, and still loses to an explicit choice */
+addL(REDUCE, emitMotion);
 
 /* deterministic noise — same drawing every load, so a screenshot diff means
    something and the static frame is reproducible */
@@ -813,7 +879,7 @@ var leak = (function(){
     for (var k = 0; k < 400; k++) step(1 / 60);
   }
   function start(){
-    if (running || REDUCE.matches) return;
+    if (running || !motionOn()) return;
     prime();
     running = true; last = 0;
     raf = requestAnimationFrame(tick);
@@ -855,22 +921,24 @@ var leak = (function(){
 
   function resize(){
     layout();
-    if (REDUCE.matches) still(); else paint();
+    if (motionOn()) paint(); else still();
   }
 
+  /* the one entry point motion state uses, whichever way it changed: the OS
+     flag, or the reader pressing the toggle. Same start(), same loop. */
   function mode(){
-    if (REDUCE.matches) { stop(); still(); }
-    else if (onScreen) start();
+    if (motionOn()) { if (onScreen) start(); }
+    else { stop(); still(); }
   }
 
   readTokens();
   layout();
-  if (REDUCE.matches) still(); else paint();
+  if (motionOn()) paint(); else still();
 
   if ("IntersectionObserver" in window) {
     new IntersectionObserver(function(es){
       onScreen = es[0].isIntersecting;
-      if (onScreen && !REDUCE.matches) start(); else stop();
+      if (onScreen && motionOn()) start(); else stop();
     }, { rootMargin: "120px 0px" }).observe(cv);
   } else { onScreen = true; start(); }
 
@@ -881,13 +949,10 @@ var leak = (function(){
     if (document.hidden) stop(); else if (onScreen) start();
   });
 
-  var addL = function(mq, fn){
-    if (mq.addEventListener) mq.addEventListener("change", fn); else mq.addListener(fn);
-  };
-  addL(REDUCE, mode);
+  onMotion(mode);
   addL(window.matchMedia("(prefers-color-scheme: dark)"), function(){
     readTokens();
-    if (REDUCE.matches) still(); else paint();
+    if (motionOn()) paint(); else still();
   });
 
   return {
@@ -905,6 +970,29 @@ var leak = (function(){
 })();
 
 /* ===========================================================================
+   3b. The switch. One control, both directions. Pressing it routes through the
+   same motionOn() every other module already reads, so it reaches the same
+   start() and the same timelines the OS-allowed path reaches — there is no
+   second, lesser animation to fall into.
+   =========================================================================== */
+(function(){
+  var btn = document.getElementById("motion");
+  if (!btn) return;
+  var state = btn.querySelector(".state");
+
+  function label(){
+    var on = motionOn();
+    btn.setAttribute("aria-pressed", on ? "true" : "false");
+    state.textContent = on ? "on" : "off";
+  }
+
+  btn.addEventListener("click", function(){ setMotion(!motionOn()); });
+  onMotion(label);
+  label();
+  btn.hidden = false;            /* it only earns its place once it works */
+})();
+
+/* ===========================================================================
    4. Choreography. One scrubbed sequence owns the page: the reader's scroll
    opens the gaps in the drawing, and the bars underneath answer it. Nothing
    in the hero moves.
@@ -913,7 +1001,15 @@ function choreograph(){
   if (!window.gsap || !window.ScrollTrigger) return;
   gsap.registerPlugin(ScrollTrigger);
 
-  gsap.matchMedia().add("(prefers-reduced-motion: no-preference)", function(){
+  /* A gsap.context, not gsap.matchMedia: matchMedia can only ever be driven by
+     the media query, and the toggle has to be able to build the SAME timelines
+     when the OS says `reduce`. Building means running this one function; the
+     opposite direction is ctx.revert(), which kills the tweens and the
+     ScrollTriggers and puts the inline styles back — every reveal target is
+     visible in the markup, so reverting leaves the page whole. */
+  var ctx = null;
+
+  function build(){
 
     if (leak) {
       var sync = function(self){ leak.progress(self.progress); };
@@ -953,9 +1049,21 @@ function choreograph(){
       opacity: 1, x: 0, duration: 0.7, ease: "expo.out", stagger: 0.065,
       scrollTrigger: { trigger: ".offer", start: "top 82%", once: true }
     });
-  });
+  }
 
-  window.addEventListener("load", function(){ ScrollTrigger.refresh(); });
+  function applyMotion(){
+    if (motionOn()) {
+      if (!ctx) ctx = gsap.context(build);
+    } else if (ctx) {
+      ctx.revert();
+      ctx = null;
+    }
+  }
+
+  onMotion(applyMotion);
+  applyMotion();
+
+  window.addEventListener("load", function(){ if (ctx) ScrollTrigger.refresh(); });
 }
 
 if (document.readyState === "loading") {
