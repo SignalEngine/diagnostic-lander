@@ -287,13 +287,6 @@ p{margin:0 0 1.1rem;max-width:64ch}
   55%{transform:translateY(4px);opacity:1}
 }
 
-/* the line that bursts from the laptop when it closes */
-.burst{
-  display:none;position:absolute;left:50%;transform:translateX(-50%);
-  top:83%;width:60px;height:17%;color:var(--accent);z-index:1;pointer-events:none;
-}
-.is-seq .burst{display:block}
-
 /* sequence layout: one viewport, everything centred and layered */
 .is-seq .hero-stage{
   height:100svh;position:relative;
@@ -354,14 +347,14 @@ summary{
   font-size:clamp(1.05rem,1rem + 0.5vw,1.3rem);font-family:var(--serif);
   display:flex;align-items:center;gap:1rem;
 }
-summary .t-icon{
+summary .t-icon,.cap-note .t-icon{
   flex:none;width:2.6rem;height:2.6rem;border-radius:8px;
   border:1px solid color-mix(in srgb,var(--accent) 32%,var(--line));
   background:color-mix(in srgb,var(--accent) 8%,transparent);
   display:grid;place-items:center;color:var(--accent);
   transition:background .2s ease,border-color .2s ease;
 }
-summary .t-icon svg{width:1.35rem;height:1.35rem}
+summary .t-icon svg,.cap-note .t-icon svg{width:1.35rem;height:1.35rem}
 details[open] summary .t-icon,summary:hover .t-icon{
   background:color-mix(in srgb,var(--accent) 16%,transparent);
   border-color:color-mix(in srgb,var(--accent) 55%,var(--line));
@@ -400,6 +393,14 @@ figure img{
 figcaption{color:var(--ink-3);font-size:.92rem;max-width:58ch}
 
 /* ---- work ---- */
+.cap-notes{margin-top:2rem;display:grid;gap:1rem}
+.cap-note{
+  display:grid;grid-template-columns:2.6rem 1fr;gap:1rem;align-items:start;
+  padding:1.15rem 1.25rem;border:1px solid var(--line);border-radius:3px;
+  background:var(--raised);
+}
+.cap-note p{margin:0;color:var(--ink-2);font-size:.97rem;line-height:1.58;max-width:none}
+@media (min-width:44rem){.cap-notes{grid-template-columns:1fr 1fr;gap:1.25rem}}
 .work-grid{margin-top:2.5rem;display:grid;gap:clamp(2.5rem,6vw,3.25rem)}
 .work-grid figure{margin:0}
 .work-grid figcaption{max-width:46ch}
@@ -482,9 +483,6 @@ a{color:var(--accent-text)}
             </div>
           </div>
         </div>
-        <svg class="burst" viewBox="0 0 60 600" preserveAspectRatio="none" aria-hidden="true" focusable="false">
-          <path d="M30 0 C26 80 34 150 30 230 C26 320 34 420 30 600" fill="none" stroke="currentColor" stroke-width="2"/>
-        </svg>
       </div>
       <div class="cue" aria-hidden="true">
         <svg class="mouse" viewBox="0 0 28 44" fill="none">
@@ -538,42 +536,42 @@ a{color:var(--accent-text)}
           <span class="t-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8.5 7.5h7M8.5 11h7M8.5 14.5h4"/><path d="M15 17.5h1"/></svg></span>
           Accountant or bookkeeper
         </summary>
-        <p>The same client details typed into practice software, the tax package and the portal. Records chased by email with no record of who has replied. The cost is onboarding and chasing: hours per client per year, every year.</p>
+        <p>The same client details typed into practice software, the tax package and the portal. Records chased by email with no record of who has replied. January spent asking for the same documents in the same order. A fix looks like: one intake that fills all three systems, chasing that runs itself until the document arrives, and a list of who still owes what.</p>
       </details>
       <details>
         <summary>
           <span class="t-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10v4"/><path d="M4 12h4l9-5v10l-9-5"/><path d="M17 9.5a3 3 0 0 1 0 5"/><path d="M8 14v5"/></svg></span>
           Marketing agency
         </summary>
-        <p>You generate the leads. They sit in a spreadsheet or an inbox until someone gets round to them, and by then they are cold. The client blames lead quality. The gap between your work and their response time is what costs the retainer.</p>
+        <p>You generate the leads. They sit in a spreadsheet or an inbox until someone gets round to them, and by then they are cold. The client blames lead quality. Reporting eats the first week of every month. A fix looks like: leads answered inside five minutes without anyone touching them, and client reports that assemble themselves overnight from the ad accounts.</p>
       </details>
       <details>
         <summary>
           <span class="t-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3"/><path d="M3.5 20c.6-3.2 2.8-5 5.5-5s4.9 1.8 5.5 5"/><circle cx="17.5" cy="7.5" r="2.5"/><path d="M16.5 11.5l1 1.5 2-2.5"/></svg></span>
           Recruitment
         </summary>
-        <p>Candidates re-keyed between job boards, the ATS and the CRM. Follow-ups that depend on someone remembering. Placements lost to whoever replied first.</p>
+        <p>Candidates re-keyed between job boards, the ATS and the CRM. Follow-ups that depend on someone remembering. CVs reformatted by hand before they go to clients. A fix looks like: one candidate record everywhere at once, follow-up that fires itself, and CVs formatted in seconds in your house style.</p>
       </details>
       <details>
         <summary>
           <span class="t-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V8l7-5 7 5v13"/><path d="M9.5 21v-6h5v6"/><path d="M9.5 10.5h5"/></svg></span>
           Trades and construction
         </summary>
-        <p>Quotes sent and never chased. Job sheets written on paper and typed into accounts later. Variations done on site and never billed. The gap is the difference between work done and work invoiced.</p>
+        <p>Quotes sent and never chased. Job sheets written on paper and typed into accounts later. Variations done on site and never billed. A fix looks like: quotes that chase themselves, job sheets filled in on a phone that land straight in the accounts, and every variation logged and invoiced.</p>
       </details>
       <details>
         <summary>
           <span class="t-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 8.5v7M8.5 12h7"/></svg></span>
           Clinic
         </summary>
-        <p>No-shows nobody follows up. Recalls that were supposed to run and did not. Enquiries out of hours answered the next working day, if at all.</p>
+        <p>No-shows nobody follows up. Recalls that were supposed to run and did not. Enquiries out of hours answered the next working day, if at all. A fix looks like: reminders that arrive when people actually read them, recalls that run on schedule, and out-of-hours enquiries answered the moment they come in.</p>
       </details>
       <details>
         <summary>
           <span class="t-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20V9l6 3V9l6 3V9l6 3v8H3Z"/><path d="M7 16.5h2M12 16.5h2M17 16.5h2"/></svg></span>
           Manufacturing and wholesale
         </summary>
-        <p>A stock spreadsheet that disagrees with the system. Orders entered twice, once for the customer and once for production. Stock you cannot sell because you do not know you have it.</p>
+        <p>A stock spreadsheet that disagrees with the system. Orders entered twice, once for the customer and once for production. Delivery notes that never quite match the invoice. A fix looks like: one version of the stock truth, one order entry, and paperwork that agrees with itself.</p>
       </details>
     </div>
     <p class="catch">Not on the list? It is still one of three things: something typed twice, something that falls between two systems, or something nobody follows up.</p>
@@ -587,8 +585,8 @@ a{color:var(--accent-text)}
         <li><svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8.5l3.5 3.5L13 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg><span>The exact step where the money goes, named, in your business, not in general terms</span></li>
         <li><svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8.5l3.5 3.5L13 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg><span>What it is costing you, in your own numbers</span></li>
         <li><svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8.5l3.5 3.5L13 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg><span>The specific fix</span></li>
-        <li><svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8.5l3.5 3.5L13 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Roughly how long that fix takes</span></li>
-        <li><svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8.5l3.5 3.5L13 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Roughly what it costs to build</span></li>
+        <li><svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8.5l3.5 3.5L13 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg><span>How long the fix takes to build</span></li>
+        <li><svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8.5l3.5 3.5L13 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg><span>A fixed quote for building it</span></li>
       </ul>
       <div class="price-row">
         <span class="fig num">£1,500</span>
@@ -597,8 +595,16 @@ a{color:var(--accent-text)}
       <div class="terms">
         <span>Delivered within <b>five working days</b> of getting access.</span>
         <span>Go ahead with the fix within <b>60 days</b> and half the £1,500 comes off the first invoice.</span>
+        <span>The build is a <b>fixed quote</b> too.</span>
+        <span>If you want an <b>NDA</b> signed before I look at anything, that is fine. Bring yours or use mine.</span>
       </div>
     </div>
+  </section>
+
+  <section class="beat">
+    <h2>Fix what you have. Or build what does not exist.</h2>
+    <p class="lede">Some gaps close with a small automation inside the tools you already run. Some need a system that has never existed. Both are on the table.</p>
+    <p>For an agency running Facebook ads, that could mean a system that drafts the ads, tailors them to each client, and adjusts the bids while you sleep. A whole product, built for one firm, owned by that firm. Two of the products below started exactly that way: as a fix built for one business.</p>
   </section>
 
   <section class="beat factory">
@@ -619,6 +625,17 @@ a{color:var(--accent-text)}
   <section class="work beat">
     <h2>Work</h2>
     <p class="lede">Six live products in six months, all out of the same factory. These are running systems, not mockups.</p>
+
+    <div class="cap-notes">
+      <div class="cap-note">
+        <span class="t-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="13" rx="1.5"/><path d="M3 14h18"/><rect x="6" y="6.5" width="7" height="5" rx="0.5"/><path d="M9.5 20h5M12 17v3"/></svg></span>
+        <p>SignalEngine and LaunchEngine run in the browser with a Windows-style desktop: windows, taskbar, drag and drop. If your team can use a PC, they can use this on day one. Underneath is a hive of AI agents working together, and a person approves what goes out.</p>
+      </div>
+      <div class="cap-note">
+        <span class="t-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5l6.5 2.6v4.9c0 4.2-2.7 7-6.5 8.5-3.8-1.5-6.5-4.3-6.5-8.5V6.1L12 3.5z"/><path d="M12 10.5v3.5"/></svg></span>
+        <p>Built to fit where it has to live: apps that install on a phone, systems that run on a server you own, and where data cannot leave the building, AI models like Llama running privately on your own machine, never public-facing.</p>
+      </div>
+    </div>
 
     <div class="work-grid">
 
@@ -763,7 +780,7 @@ function rgb(hex){
 
 /* ===========================================================================
    2. The spine. The engraved rule made structural: three phase-shifted sine
-   strands running the length of the page, bursting out from under the hero,
+   strands running the length of the page, born below the settled laptop,
    settling into the left gutter, threading a node through every beat. Violet
    for the run of it; orange across the proof section, where the page talks
    about loss. Geometry is rebuilt on resize; the draw-on lives in the GSAP
@@ -789,11 +806,23 @@ var spine = (function(){
     var cx = Math.round(vw / 2);
 
     var yProof = pageY(proof);
-    var y0 = Math.max(40, yProof - 300);                 /* burst out under the hero */
+    /* The ONE origin. In the pinned sequence the hero settles so its bottom
+       edge meets the proof section: the settled laptop's visual bottom sits
+       around 86% of that final viewport, so starting the line at 90% puts
+       its birth cleanly below the laptop, never through it. Without the
+       sequence (no GSAP) the hero is static, so start just under it. */
+    var heroEl = document.querySelector(".hero");
+    var padB = parseFloat(getComputedStyle(heroEl).paddingBottom) || 0;
+    var y0 = heroEl.classList.contains("is-seq")
+      ? Math.round(yProof - padB - window.innerHeight * 0.10)
+      : Math.max(40, Math.round(yProof - padB + 16));
     var foot = document.querySelector("footer");
     var y1 = pageY(foot) + foot.getBoundingClientRect().height - 24;
     var proofEnd = yProof + proof.getBoundingClientRect().height + 10;
-    var ENTRY = 320;                                     /* centre → gutter, done before content */
+    /* centre → gutter, finished in the whitespace above the proof heading
+       so the sweep never crosses the text column's glyphs */
+    var proofPadTop = parseFloat(getComputedStyle(proof).paddingTop) || 0;
+    var ENTRY = Math.max(60, Math.min(320, (yProof + proofPadTop - 18) - y0));
 
     svg.setAttribute("viewBox", "0 0 " + vw + " " + docH);
     svg.setAttribute("width", vw);
@@ -1203,16 +1232,12 @@ function choreograph(){
        the scroll distance underneath it is 340% — every beat of it scrubbed,
        nothing on a clock. Order: cue out → lid opens → camera moves in →
        the offer assembles on the screen → camera pulls back, lid closes →
-       the line bursts from the laptop and hands over to the spine. -------- */
+       the spine takes over below the laptop. -------- */
     hero.classList.add("is-seq");
-
-    var burst = document.querySelector(".burst path");
-    var bLen = burst.getTotalLength();
 
     gsap.set(".lid", { rotationX: -84 });
     gsap.set(".screen-full", { opacity: 0 });
     gsap.set(".hero-copy", { autoAlpha: 0, scale: .62, transformOrigin: "50% 50%" });
-    gsap.set(burst, { strokeDasharray: bLen + " " + bLen, strokeDashoffset: bLen });
 
     var tl = gsap.timeline({
       defaults: { ease: "none" },
@@ -1255,8 +1280,7 @@ function choreograph(){
       .to(".laptop-area", { autoAlpha: 1, duration: .05 }, .73)
       .to(".screen-full", { opacity: 0, duration: .08 }, .76)
       .to(".screen-ui .mini", { opacity: 1, duration: .1 }, .78)
-      .to(".lid", { rotationX: -84, duration: .11, ease: "power1.inOut" }, .8)
-      .to(burst, { strokeDashoffset: 0, duration: .1 }, .9);
+      .to(".lid", { rotationX: -84, duration: .11, ease: "power1.inOut" }, .8);
 
     /* -------- the spine draws itself down the page as the reader goes -------- */
     var spineTweens = [];
@@ -1270,6 +1294,41 @@ function choreograph(){
           var len = p.getTotalLength();
           if (!len) return;
           gsap.set(p, { strokeDasharray: len + " " + len, strokeDashoffset: len });
+          if (p.getAttribute("class") === "sp-leak") {
+            /* the orange strand draws in lockstep with the lead violet
+               strand: same trigger, same scrub, and a sampled ease that
+               keeps tip level with tip. Arclength is not linear in page-Y
+               (the entry sweep from centre to gutter spends dash length
+               without descending), so both paths are sampled and the ease
+               answers: when the violet tip is at this Y, how much of the
+               orange path reaches the same Y? */
+            var s0 = paths[0], sLen = s0.getTotalLength();
+            var N = 160, sy = [], ly = [], k2;
+            for (k2 = 0; k2 <= N; k2++) {
+              sy.push(s0.getPointAtLength(sLen * k2 / N).y);
+              ly.push(p.getPointAtLength(len * k2 / N).y);
+            }
+            var leakEase = function(t){
+              if (t <= 0) return 0;
+              if (t >= 1) return 1;
+              var f = t * N, i3 = Math.floor(f);
+              var y = sy[i3] + (sy[Math.min(N, i3 + 1)] - sy[i3]) * (f - i3);
+              if (y <= ly[0]) return 0;
+              if (y >= ly[N]) return 1;
+              var lo = 0, hi = N, mid;
+              while (hi - lo > 1) { mid = (lo + hi) >> 1; if (ly[mid] <= y) lo = mid; else hi = mid; }
+              return (lo + (y - ly[lo]) / (ly[hi] - ly[lo])) / N;
+            };
+            spineTweens.push(gsap.to(p, {
+              strokeDashoffset: 0, ease: leakEase,
+              scrollTrigger: {
+                trigger: "#proof", start: "top 88%",
+                endTrigger: "footer", end: "bottom bottom",
+                scrub: 0.4
+              }
+            }));
+            return;
+          }
           spineTweens.push(gsap.to(p, {
             strokeDashoffset: 0, ease: "none",
             scrollTrigger: {
