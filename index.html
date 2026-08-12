@@ -105,7 +105,11 @@ body{
   overflow-x:clip;
 }
 .wrap{width:min(100% - 2.5rem,62rem);margin-inline:auto;position:relative;z-index:1}
-@media (max-width:24rem){.wrap{width:calc(100% - 1.75rem)}}
+/* Below the desktop breakpoint the spine and the text share a narrow gutter;
+   the wave peaks were brushing the first characters. The column steps right
+   and the wave is clamped to keep clear water between line and type. */
+@media (max-width:62rem){.wrap{width:auto;margin-inline:2.4rem 1.15rem}}
+@media (max-width:24rem){.wrap{width:auto;margin-inline:2.15rem 0.85rem}}
 
 section{padding-block:clamp(3.5rem,9vw,7rem)}
 section + section{border-top:1px solid var(--line)}
@@ -1274,8 +1278,8 @@ var spine = (function(){
     var vw = document.documentElement.clientWidth;
     var wrap = document.querySelector(".wrap");
     var wl = wrap.getBoundingClientRect().left;
-    var X = Math.max(9, Math.round(wl * 0.5));          /* gutter lane */
-    var A = Math.max(3, Math.min(7, X - 2));            /* wave amplitude */
+    var X = Math.max(9, Math.min(Math.round(wl * 0.5), wl - 19)); /* gutter lane */
+    var A = Math.max(3, Math.min(7, wl - X - 12));      /* peaks stay >=12px off the text */
     var cx = Math.round(vw / 2);
 
     var yProof = pageY(proof);
@@ -2096,7 +2100,7 @@ function choreograph(){
       .set(copyEl, { autoAlpha: 0 }, .46)
       .set(screenCopy, { autoAlpha: 1 }, .46)
       /* held ~.46–.58: the laptop at rest, the page live on its screen */
-      .to(".hero-stage .lid", { rotationX: -84, duration: .26, ease: "power1.inOut" }, .58)
+      .to(".hero-stage .lid", { rotationX: -96, duration: .26, ease: "power1.inOut" }, .58)
       .to(".hero-stage .zoom", {
         scale: .48,
         y: function(){ return window.innerHeight * .3; },
