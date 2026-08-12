@@ -202,6 +202,7 @@ p{margin:0 0 1.1rem;max-width:64ch}
 .lid{
   position:relative;width:100%;aspect-ratio:16/10.4;
   transform-style:preserve-3d;transform-origin:50% 100%;
+  z-index:2;
 }
 .screen{
   position:absolute;inset:0;border-radius:14px 14px 4px 4px;
@@ -2100,7 +2101,7 @@ function choreograph(){
       .set(copyEl, { autoAlpha: 0 }, .46)
       .set(screenCopy, { autoAlpha: 1 }, .46)
       /* held ~.46–.58: the laptop at rest, the page live on its screen */
-      .to(".hero-stage .lid", { rotationX: -96, duration: .26, ease: "power1.inOut" }, .58)
+      .to(".hero-stage .lid", { rotationX: 158, duration: .3, ease: "power1.inOut" }, .58)
       .to(".hero-stage .zoom", {
         scale: .48,
         y: function(){ return window.innerHeight * .3; },
