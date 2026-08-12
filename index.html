@@ -3088,8 +3088,16 @@ try {
 } catch (e) {}
 if (nm) {
   document.getElementById("meet-h").textContent = "Nice to meet you, " + nm + ".";
+  /* Three in-page mentions, spread early / mid / close — deliberately no
+     more, so it reads as addressed to them rather than mail-merged. */
   var ch = document.querySelector(".calc h2");
   if (ch) ch.textContent = ch.textContent.replace(/\.$/, ", " + nm + ".");
+  Array.prototype.forEach.call(document.querySelectorAll(".lede"), function(el){
+    if (/sounds familiar\.\s*$/.test(el.textContent))
+      el.textContent = el.textContent.replace(/\.\s*$/, ", " + nm + ".");
+  });
+  var cap = document.querySelector("#finale .caption");
+  if (cap) cap.textContent = cap.textContent.replace(/^\s*Tell me/, nm + ", tell me");
 }
 
 var inerted = [];
