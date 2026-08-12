@@ -450,8 +450,9 @@ figcaption{color:var(--ink-3);font-size:.92rem;max-width:58ch}
   font-size:clamp(1.1rem,1.02rem + 0.35vw,1.35rem);letter-spacing:-0.012em;
   line-height:1.2;margin-bottom:.25rem;
 }
-.w-lead .demo-cta{margin-top:1.1rem}
-.w-lead .demo-cta .cta{margin-top:0}
+.work-grid .demo-cta{margin-top:1.1rem}
+.work-grid .demo-cta .cta{margin-top:0}
+.work-grid .demo-cta .cta--ghost{padding:.7rem 1.25rem;font-size:.94rem;font-weight:560}
 .w-phone .shot-panel{
   background:var(--raised);border:1px solid var(--line);border-radius:3px;
   padding:clamp(1rem,3.5vw,1.75rem);
@@ -1122,10 +1123,10 @@ html.cur-on,html.cur-on *{cursor:none!important}
           <img class="shot" src="launchengine.jpg" width="1500" height="858" loading="lazy" decoding="async"
                alt="Two windows on a dark desktop. The right one is headed &quot;43 real directories — highest authority first&quot; with cards for planning launch day, Product Hunt and Show HN. The left one, Communities, lists r/SideProject and r/indiehackers with a short reason each and a Strong fit tag.">
         </picture>
-        <figcaption><b>LaunchEngine</b>A launch tool: submission directories ranked by authority, next to the communities matched to the product.</figcaption>
+        <figcaption><b>LaunchEngine</b>Maps the directories and communities that fit a product, drafts the posts and the launch video, and walks every submission through with a person approving each one before it goes out.</figcaption>
         <div class="demo-cta">
-          <a class="cta" href="https://launchengine.app" target="_blank" rel="noopener">
-            See the SaaS demo
+          <a class="cta" href="https://launchengine.app/launch/demo" target="_blank" rel="noopener">
+            See the demo
             <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M2 8h11M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </a>
         </div>
@@ -1137,7 +1138,13 @@ html.cur-on,html.cur-on *{cursor:none!important}
           <img class="shot" src="signalsprint.jpg" width="1600" height="1000" loading="lazy" decoding="async"
                alt="The signalsprint.io home page. A dark blue hero headed &quot;The Speed-to-Lead Platform That Gets You There First&quot;, a paragraph of body copy, and two buttons reading &quot;Get Your First HOT Alert&quot; and &quot;How Fast Is Your Team?&quot;, under a navigation bar with Marketing Engine, Free Tools, How It Works, Features, Pricing and Blog.">
         </picture>
-        <figcaption><b>SignalSprint</b>The marketing site for my own speed-to-lead product.</figcaption>
+        <figcaption><b>SignalSprint</b>Speed to lead for paid-ad leads: a personalised page for every enquiry, live intent scoring, and a push alert to whoever can act while the lead is still warm.</figcaption>
+        <div class="demo-cta">
+          <a class="cta cta--ghost" href="https://signalsprint.io" target="_blank" rel="noopener">
+            Visit the site
+            <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M2 8h11M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </a>
+        </div>
       </figure>
 
       <figure class="w-phone">
@@ -1148,7 +1155,7 @@ html.cur-on,html.cur-on *{cursor:none!important}
                  alt="A phone-width dark screen headed QuestLifter. A Training Day card shows Steps at 30 of 8,000, a weekly sessions card shows Full, Upper, Lower and Walking as progress bars reading 1 of 3 done, and below it a Full Body recommendation with buttons to enable campaign play or use just the tracker.">
           </picture>
         </div>
-        <figcaption><b>QuestLifter</b>A gym tracker for mobile, with an optional game layer over the training plan.</figcaption>
+        <figcaption><b>QuestLifter</b>A gym tracker built as an installable web app: training plans, session tracking, and an optional campaign mode that turns the programme into a game.</figcaption>
       </figure>
 
       <figure class="w-engine">
@@ -1157,7 +1164,13 @@ html.cur-on,html.cur-on *{cursor:none!important}
           <img class="shot" src="signalengine.jpg" width="1500" height="858" loading="lazy" decoding="async"
                alt="A dark desktop interface with three open windows. Calendar lists Discovery, Email, Proposals, Replies and Skill against an hourly timeline with a Proposals run scheduled at 07:00. Email Lab is a test bench that replays what the engine would reply to a prospect. Video Studio shows a video proposal template marked published.">
         </picture>
-        <figcaption><b>SignalEngine</b>Outbound engine: a run calendar, a reply test bench, and a proposal template editor, each in its own window.</figcaption>
+        <figcaption><b>SignalEngine</b>An autonomous outbound engine. It finds prospects from live buying signals, researches each one, drafts the email and a video proposal, and sends from your own inbox. A person approves what goes out.</figcaption>
+        <div class="demo-cta">
+          <a class="cta cta--ghost" href="https://engine.signalsprint.io" target="_blank" rel="noopener">
+            Visit the site
+            <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M2 8h11M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </a>
+        </div>
       </figure>
 
       <figure class="w-band">
@@ -1166,7 +1179,7 @@ html.cur-on,html.cur-on *{cursor:none!important}
           <img class="shot" src="radar.jpg" width="1600" height="1124" loading="lazy" decoding="async"
                alt="The top of the Contract Radar screen: a Rescan now button, a POSTED row of time filters from 1h to 7d with 3h selected, a WHERE row of country pills for UK, US, Canada, Australia, Germany, Netherlands and Worldwide, and a message saying nothing matches these filters.">
         </picture>
-        <figcaption><b>Contract Radar</b>A recruitment tool: contract roles scanned overnight, then filtered by how recently they were posted and where.</figcaption>
+        <figcaption><b>Contract Radar</b>Scans the contract boards every hour, scores each role against a CV, and drafts the application. Built for my own contracting, then opened to invited users.</figcaption>
       </figure>
 
       <figure class="w-pipe">
@@ -1175,7 +1188,13 @@ html.cur-on,html.cur-on *{cursor:none!important}
           <img class="shot" src="pipevoice.jpg" width="1400" height="935" loading="lazy" decoding="async"
                alt="The PipeVoice settings window on the Voices tab. A Voices card lists the presets Tidy, Social, Professional and Code slash Prompt. An App profiles card maps Terminal, Slack, Cursor or VS Code, and Outlook to those presets.">
         </picture>
-        <figcaption><b>PipeVoice</b>A Windows voice-typing app: dictation presets, and the rules that map each one to an application.</figcaption>
+        <figcaption><b>PipeVoice</b>Push-to-talk voice typing for Windows that types into any application, including terminals and editors. Four transcription engines and a fully offline mode for work that cannot leave the machine. Open source.</figcaption>
+        <div class="demo-cta">
+          <a class="cta cta--ghost" href="https://pipevoice.app" target="_blank" rel="noopener">
+            Visit the site
+            <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M2 8h11M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </a>
+        </div>
       </figure>
 
     </div>
