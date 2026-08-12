@@ -39,6 +39,11 @@
    GSAP CDN fails, choreograph() removes the class and the static hero
    returns. */
 document.documentElement.classList.add("seq");
+/* ?meet — arrived via the QR card. The class shows the greeting overlay
+   (markup just below) before anything else paints and locks scroll via CSS.
+   With JS off this never runs, the overlay stays display:none, nothing is
+   trapped. */
+if (/[?&]meet(?=[=&]|$)/.test(location.search)) document.documentElement.classList.add("meet");
 </script>
 
 <style>
@@ -750,7 +755,93 @@ section.beat h2{filter:sepia(calc(var(--warmth)*.26))}
 }
 #cur-ring svg{width:13px;height:13px;color:var(--accent-text);opacity:0;transition:opacity .16s ease}
 html.cur-on,html.cur-on *{cursor:none!important}
+
+/* ================= the QR card =================
+   The second and only other light element on the page, deliberately in the
+   report specimen's paper language: same cream stock, same slight throw,
+   same shadows. Points a camera at the page itself (?meet). */
+.meet-qr{display:grid;justify-items:center}
+.qr-card{
+  margin:0;rotate:1.2deg;
+  background:linear-gradient(165deg,#F6F1E3 0%,#F1EBDB 55%,#EAE3D0 100%);
+  border-radius:2px;color:#26221A;
+  box-shadow:
+    0 1px 2px rgba(0,0,0,.35),
+    0 14px 26px -10px rgba(0,0,0,.5),
+    0 40px 70px -26px rgba(0,0,0,.6);
+  padding:1.35rem 1.35rem 1.15rem;
+  width:min(16.5rem,100%);
+  display:grid;gap:.95rem;justify-items:center;
+}
+.qr-card img{
+  display:block;width:185px;max-width:100%;height:auto;
+  image-rendering:pixelated;
+}
+.qr-card figcaption{
+  color:#4A4438;font-size:.92rem;line-height:1.5;
+  max-width:24ch;text-align:center;
+}
+
+/* ================= the ?meet greeting =================
+   Shown only when html carries .meet (set pre-paint from the query string).
+   Solid ground, so a mis-tap on the backdrop has nothing to fall through
+   to — only the two buttons and Esc act. Scroll locks via the same class. */
+html.meet{overflow:hidden}
+.meet-overlay{display:none}
+html.meet .meet-overlay{
+  display:grid;place-items:center;
+  position:fixed;inset:0;z-index:120;
+  background:var(--ground);
+  padding:clamp(1.25rem,5vw,2.5rem);
+}
+.meet-panel{max-width:36rem;display:grid;gap:1.2rem;justify-items:start}
+.meet-panel h2{font-size:clamp(2.3rem,1.7rem + 3.4vw,3.6rem)}
+.meet-panel p{margin:0;color:var(--ink-2);font-size:clamp(1.05rem,1rem + .4vw,1.25rem);line-height:1.55}
+.meet-actions{display:flex;flex-wrap:wrap;align-items:center;gap:1rem .9rem;margin-top:.4rem}
+.meet-actions .cta{margin-top:0;font-family:inherit;cursor:pointer}
+
+/* ================= the motion chip =================
+   iOS only: DeviceOrientationEvent.requestPermission needs a user gesture,
+   so a small ghost chip offers it once, bottom corner, and leaves either
+   way. Never built on Android or desktop. */
+.motion-chip{
+  position:fixed;right:1rem;bottom:1rem;z-index:70;
+  display:flex;align-items:center;gap:.15rem;
+  background:color-mix(in srgb,var(--ground) 82%,transparent);
+  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+  border:1px solid color-mix(in srgb,var(--accent) 55%,transparent);
+  border-radius:999px;padding:.2rem .25rem .2rem .35rem;
+}
+.motion-chip .mc-go{
+  background:none;border:0;cursor:pointer;font-family:inherit;
+  color:var(--accent-text);font-size:.88rem;font-weight:560;
+  padding:.5rem .5rem .5rem .55rem;border-radius:999px;
+}
+.motion-chip .mc-x{
+  background:none;border:0;cursor:pointer;color:var(--ink-2);
+  width:2rem;height:2rem;border-radius:50%;
+  display:grid;place-items:center;padding:0;
+}
+.motion-chip .mc-x svg{width:.7rem;height:.7rem}
+.motion-chip .mc-go:focus-visible,.motion-chip .mc-x:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 </style>
+
+<!-- The ?meet greeting. display:none unless html.meet was set pre-paint from
+     the query string; sits first in the body so it is the first thing painted
+     on a QR arrival. With JS off it is never shown. -->
+<div class="meet-overlay" id="meet-overlay">
+  <div class="meet-panel" role="dialog" aria-modal="true" aria-labelledby="meet-h">
+    <h2 id="meet-h">Great to meet you today.</h2>
+    <p>This page is the short version of what I do. First things first:</p>
+    <div class="meet-actions">
+      <a class="cta meet-li" href="https://www.linkedin.com/in/jamestaylor-signal-sprint/" target="_blank" rel="noopener">
+        Add me on LinkedIn
+        <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M2 8h11M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </a>
+      <button type="button" class="cta cta--ghost meet-go">Carry on to the page</button>
+    </div>
+  </div>
+</div>
 
 <svg class="spine" id="spine" aria-hidden="true" focusable="false"></svg>
 
@@ -1207,6 +1298,13 @@ html.cur-on,html.cur-on *{cursor:none!important}
     </a>
     <p class="caption">Tell me how work comes into your business and how it ends up invoiced. You will get a straight answer about whether there is likely something worth finding. The diagnosis itself is the paid part, and if there is nothing there, the call is where you hear it, free, before you have spent a pound.</p>
       <p class="caption">Prefer email? <a href="mailto:jamesataylor1@gmail.com">jamesataylor1@gmail.com</a></p>
+  </section>
+
+  <section class="beat meet-qr">
+    <figure class="qr-card">
+      <img src="qr-meet.png" alt="QR code that opens this page" width="444" height="444" loading="lazy" decoding="async">
+      <figcaption>Met at an event? Point a camera here and the page travels with you.</figcaption>
+    </figure>
   </section>
 
   <footer>
@@ -2942,6 +3040,67 @@ btn.addEventListener("click", function(e){ e.preventDefault(); open(); });
 
 <script>
 /* ===========================================================================
+   The ?meet greeting's behaviour. The overlay is already visible (html.meet
+   was set pre-paint) and scroll is already locked by CSS; this adds the
+   Cal modal's containment — inert on everything behind, Tab cycled inside,
+   Esc to dismiss — and strips ?meet from the URL on dismissal so a refresh
+   does not re-trap them. The backdrop deliberately does nothing: a mis-tap
+   must not skip the greeting. Only the two buttons and Esc act.
+   =========================================================================== */
+(function(){
+"use strict";
+var root = document.documentElement;
+if (!root.classList.contains("meet")) return;
+var ov = document.getElementById("meet-overlay");
+if (!ov) return;
+
+var inerted = [];
+function setInert(on){
+  if (!("inert" in HTMLElement.prototype)) return;
+  if (on) {
+    inerted = [];
+    Array.prototype.forEach.call(document.body.children, function(el){
+      if (el === ov || el.tagName === "SCRIPT" || el.inert) return;
+      el.inert = true;
+      inerted.push(el);
+    });
+  } else {
+    inerted.forEach(function(el){ el.inert = false; });
+    inerted = [];
+  }
+}
+
+function onKey(e){
+  if (e.key === "Escape") { dismiss(); return; }
+  if (e.key !== "Tab") return;
+  var f = ov.querySelectorAll('a[href], button');
+  if (!f.length) return;
+  var first = f[0], last = f[f.length - 1];
+  if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+  else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+}
+
+function dismiss(){
+  root.classList.remove("meet");   /* hides the overlay, unlocks scroll */
+  setInert(false);
+  document.removeEventListener("keydown", onKey);
+  try {
+    var u = new URL(location.href);
+    u.searchParams.delete("meet");
+    history.replaceState(null, "", u.pathname + u.search + u.hash);
+  } catch (e) {}
+}
+
+setInert(true);
+document.addEventListener("keydown", onKey);
+ov.querySelector(".meet-go").addEventListener("click", dismiss);
+var li = ov.querySelector(".meet-li");
+if (li) li.focus();
+})();
+</script>
+
+<script>
+/* ===========================================================================
    Desktop pointer choreography — (pointer:fine) ONLY. Two pieces:
    1. The cursor: a small violet dot trailing the pointer with a little lag,
       swelling into a ring over anything interactive; over the leak drawing
@@ -3241,6 +3400,89 @@ if (document.readyState === "loading") {
     ty = -((e.clientY / window.innerHeight) * 2 - 1);
   }, { passive: true });
 
+  /* -------------------------------------------------------------------------
+     Phones: deviceorientation feeds the SAME tx/ty the pointer writes, so
+     tilting the phone shifts the field's parallax exactly the way the
+     pointer does on desktop. The handler only stores two numbers; all
+     smoothing and uniform writes happen in the existing rAF loop, so scroll
+     is never touched. The first sample after (re)zeroing becomes the
+     baseline — however they are holding the phone is "level" — and the
+     baseline re-zeros on rotation and on real (fold/unfold) resizes.
+     Deflection is clamped small and gained down: ambience, not a gimmick.
+     Android attaches directly; iOS 13+ needs a gesture-gated permission, so
+     a small dismissible ghost chip offers it once — and only where the
+     permission API exists and events are not already flowing.
+     ------------------------------------------------------------------------- */
+  var isTouch = window.matchMedia("(pointer: coarse)").matches;
+  if (isTouch && typeof DeviceOrientationEvent !== "undefined") {
+    var moBase = null, MO_MAXDEG = 14, MO_GAIN = 0.65, moGot = false;
+    var moRemap = function(beta, gamma){
+      /* beta/gamma are device-frame; remap into the screen's frame so
+         "tilt right" is +x whichever way the phone is rotated */
+      var a = (screen.orientation && typeof screen.orientation.angle === "number")
+        ? screen.orientation.angle : (window.orientation || 0);
+      a = ((a % 360) + 360) % 360;
+      if (a === 90)  return { x: beta,   y: -gamma };
+      if (a === 180) return { x: -gamma, y: -beta };
+      if (a === 270) return { x: -beta,  y: gamma };
+      return { x: gamma, y: beta };
+    };
+    var onOrient = function(e){
+      if (document.hidden) return;
+      if (e.beta == null || e.gamma == null) return;
+      moGot = true;
+      var v = moRemap(e.beta, e.gamma);
+      if (!moBase) moBase = { x: v.x, y: v.y };
+      var dx = Math.max(-MO_MAXDEG, Math.min(MO_MAXDEG, v.x - moBase.x)) / MO_MAXDEG;
+      var dy = Math.max(-MO_MAXDEG, Math.min(MO_MAXDEG, v.y - moBase.y)) / MO_MAXDEG;
+      tx = dx * MO_GAIN;
+      ty = -dy * MO_GAIN;
+    };
+    var moRezero = function(){ moBase = null; };
+    if (screen.orientation && screen.orientation.addEventListener) {
+      screen.orientation.addEventListener("change", moRezero);
+    } else {
+      window.addEventListener("orientationchange", moRezero);
+    }
+    /* fold/unfold shows up as a width change; URL-bar collapse only changes
+       height, and must NOT re-zero mid-scroll */
+    var moW = window.innerWidth;
+    window.addEventListener("resize", function(){
+      if (window.innerWidth !== moW) { moW = window.innerWidth; moRezero(); }
+    });
+
+    var needPerm = typeof DeviceOrientationEvent.requestPermission === "function";
+    window.addEventListener("deviceorientation", onOrient, { passive: true });
+    if (needPerm) {
+      var buildChip = function(){
+        /* the greeting overlay owns the screen and inerts the body; wait it out */
+        if (document.documentElement.classList.contains("meet")) {
+          setTimeout(buildChip, 1000);
+          return;
+        }
+        var chip = document.createElement("div");
+        chip.className = "motion-chip";
+        chip.innerHTML =
+          '<button type="button" class="mc-go">Enable motion</button>' +
+          '<button type="button" class="mc-x" aria-label="Dismiss">' +
+            '<svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 3l10 10M13 3L3 13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>' +
+          '</button>';
+        document.body.appendChild(chip);
+        var drop = function(){ if (chip.parentNode) chip.parentNode.removeChild(chip); };
+        chip.querySelector(".mc-go").addEventListener("click", function(){
+          try {
+            DeviceOrientationEvent.requestPermission().catch(function(){});
+          } catch (err) {}
+          drop(); /* either way — granted means events start flowing */
+        });
+        chip.querySelector(".mc-x").addEventListener("click", drop);
+      };
+      /* if events are already flowing (permission granted earlier in the
+         session), no chip; probe briefly first */
+      setTimeout(function(){ if (!moGot) buildChip(); }, 900);
+    }
+  }
+
   function resize(){
     DPR = Math.min(window.devicePixelRatio || 1, 2);
     renderer.setPixelRatio(DPR);
@@ -3260,6 +3502,8 @@ if (document.readyState === "loading") {
     tiltX += (tx - tiltX) * 0.04;
     tiltY += (ty - tiltY) * 0.04;
     uni.uTilt.value.set(tiltX, tiltY);
+    canvas._tilt = tiltX; /* JS property, not an attribute: free, and lets a
+                             headless check read the live tilt state */
     var target = 0;
     if (proof) {
       var r = proof.getBoundingClientRect();
