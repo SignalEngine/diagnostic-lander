@@ -773,9 +773,25 @@ html.cur-on,html.cur-on *{cursor:none!important}
   width:min(16.5rem,100%);
   display:grid;gap:.95rem;justify-items:center;
 }
-.qr-card img{
+.qr-card img,.qr-card canvas{
   display:block;width:185px;max-width:100%;height:auto;
   image-rendering:pixelated;
+}
+.qr-name{display:grid;gap:.3rem;justify-items:center;width:100%}
+.qr-name label{
+  color:#4A4438;font-size:.8rem;font-weight:560;
+  letter-spacing:.04em;text-transform:uppercase;
+}
+.qr-name input{
+  width:min(11rem,100%);text-align:center;
+  font-family:inherit;font-size:1.05rem;color:#26221A;
+  background:transparent;border:0;border-bottom:1.5px solid #A89F8A;
+  border-radius:0;padding:.25rem .2rem;
+}
+.qr-name input:focus-visible{outline:none;border-bottom-color:#26221A}
+.qr-name p{
+  margin:.15rem 0 0;color:#4A4438;font-size:.8rem;line-height:1.45;
+  max-width:22ch;text-align:center;
 }
 .qr-card figcaption{
   color:#4A4438;font-size:.92rem;line-height:1.5;
@@ -1303,7 +1319,13 @@ html.meet .meet-overlay{
   <section class="beat meet-qr">
     <figure class="qr-card">
       <img src="qr-meet.png" alt="QR code that opens this page" width="444" height="444" loading="lazy" decoding="async">
+      <canvas id="qr-cv" width="444" height="444" hidden aria-label="Personalised QR code that opens this page"></canvas>
       <figcaption>Met at an event? Point a camera here and the page travels with you.</figcaption>
+      <div class="qr-name">
+        <label for="qr-n">Their first name</label>
+        <input id="qr-n" type="text" autocomplete="off" maxlength="20" enterkeyhint="done" spellcheck="false">
+        <p>Type a name and the code becomes their personal invitation.</p>
+      </div>
     </figure>
   </section>
 
@@ -3054,6 +3076,22 @@ if (!root.classList.contains("meet")) return;
 var ov = document.getElementById("meet-overlay");
 if (!ov) return;
 
+/* ?n=<name> personalises the greeting. The name arrives through the URL, so
+   it is hostile input: allowlisted characters only, hard length cap, and it
+   only ever lands via textContent — never markup. Anything that fails the
+   allowlist falls back to the nameless greeting. */
+var nm = "";
+try {
+  var raw = new URLSearchParams(location.search).get("n") || "";
+  raw = raw.replace(/[^A-Za-zÀ-ɏ' -]/g, "").replace(/\s+/g, " ").trim().slice(0, 20);
+  if (/[A-Za-zÀ-ɏ]/.test(raw)) nm = raw;
+} catch (e) {}
+if (nm) {
+  document.getElementById("meet-h").textContent = "Nice to meet you, " + nm + ".";
+  var ch = document.querySelector(".calc h2");
+  if (ch) ch.textContent = ch.textContent.replace(/\.$/, ", " + nm + ".");
+}
+
 var inerted = [];
 function setInert(on){
   if (!("inert" in HTMLElement.prototype)) return;
@@ -3087,6 +3125,7 @@ function dismiss(){
   try {
     var u = new URL(location.href);
     u.searchParams.delete("meet");
+    u.searchParams.delete("n");
     history.replaceState(null, "", u.pathname + u.search + u.hash);
   } catch (e) {}
 }
@@ -3096,6 +3135,68 @@ document.addEventListener("keydown", onKey);
 ov.querySelector(".meet-go").addEventListener("click", dismiss);
 var li = ov.querySelector(".meet-li");
 if (li) li.focus();
+})();
+</script>
+
+<script>
+/* ===========================================================================
+   The name box under the QR card. Typing a first name redraws the code
+   client-side to encode ?meet&n=<name>; clearing it restores the static PNG.
+   The qrcode-generator lib (~5KB) loads lazily on the first keystroke, so a
+   visitor who never touches the box downloads nothing. Same allowlist as the
+   greeting reader, so the code can only ever encode what the reader accepts.
+   =========================================================================== */
+(function(){
+"use strict";
+var input = document.getElementById("qr-n");
+var cv = document.getElementById("qr-cv");
+var img = document.querySelector(".qr-card img");
+if (!input || !cv || !img) return;
+
+function clean(s){
+  s = (s || "").replace(/[^A-Za-zÀ-ɏ' -]/g, "").replace(/\s+/g, " ").trim().slice(0, 20);
+  return /[A-Za-zÀ-ɏ]/.test(s) ? s : "";
+}
+
+var libState = 0; /* 0 not requested, 1 loading, 2 ready */
+function loadLib(cb){
+  if (libState === 2) { cb(); return; }
+  if (libState === 1) return;
+  libState = 1;
+  var s = document.createElement("script");
+  s.src = "https://cdn.jsdelivr.net/npm/qrcode-generator@1.5.0/qrcode.min.js";
+  s.onload = function(){ libState = 2; cb(); };
+  s.onerror = function(){ libState = 0; };
+  document.head.appendChild(s);
+}
+
+function draw(name){
+  var url = location.origin + location.pathname + "?meet&n=" + encodeURIComponent(name);
+  var qr = qrcode(0, "M");
+  qr.addData(url);
+  qr.make();
+  var n = qr.getModuleCount(), cell = 6, quiet = 2;
+  var size = (n + quiet * 2) * cell;
+  cv.width = size; cv.height = size;
+  var ctx = cv.getContext("2d");
+  ctx.fillStyle = "#F3EFE6";
+  ctx.fillRect(0, 0, size, size);
+  ctx.fillStyle = "#14171C";
+  for (var r = 0; r < n; r++) for (var c = 0; c < n; c++)
+    if (qr.isDark(r, c)) ctx.fillRect((c + quiet) * cell, (r + quiet) * cell, cell, cell);
+  img.hidden = true;
+  cv.hidden = false;
+}
+
+var t;
+input.addEventListener("input", function(){
+  clearTimeout(t);
+  t = setTimeout(function(){
+    var name = clean(input.value);
+    if (!name) { cv.hidden = true; img.hidden = false; return; }
+    loadLib(function(){ draw(name); });
+  }, 250);
+});
 })();
 </script>
 
