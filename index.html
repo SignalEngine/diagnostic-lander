@@ -108,8 +108,8 @@ body{
 /* Below the desktop breakpoint the spine and the text share a narrow gutter;
    the wave peaks were brushing the first characters. The column steps right
    and the wave is clamped to keep clear water between line and type. */
-@media (max-width:62rem){.wrap{width:auto;margin-inline:2.4rem 1.15rem}}
-@media (max-width:24rem){.wrap{width:auto;margin-inline:2.15rem 0.85rem}}
+@media (max-width:62rem){.wrap{width:calc(100% - 4.4rem)}}
+@media (max-width:24rem){.wrap{width:calc(100% - 4rem)}}
 
 section{padding-block:clamp(3.5rem,9vw,7rem)}
 section + section{border-top:1px solid var(--line)}
