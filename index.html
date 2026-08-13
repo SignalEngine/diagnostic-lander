@@ -549,6 +549,9 @@ figcaption{color:var(--ink-3);font-size:.92rem;max-width:58ch}
 .work-seq .work-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:clamp(3rem,10vw,4.5rem);margin-top:2.5rem}
 .work-seq .work-grid figure{margin:0;grid-column:auto;grid-row:auto;display:grid;gap:1.1rem;align-content:start}
 .work-seq .work-grid > figure > picture,.work-seq .work-grid .shot-panel{display:none}
+/* title and description above the frame — image-first stacking read as the
+   previous entry's screenshot (James, 13 Aug). The button stays last. */
+.work-seq .work-grid figure > figcaption{order:-1}
 .work-seq .m-frame{position:relative;padding-bottom:.7rem}
 .work-seq .m-frame .laptop{width:min(26rem,92%);margin-inline:auto}
 .work-seq .m-frame .screen-ui picture{position:absolute;inset:0;display:block}
