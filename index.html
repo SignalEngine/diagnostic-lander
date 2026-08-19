@@ -819,6 +819,13 @@ html.meet .meet-overlay{
 .meet-panel p{margin:0;color:var(--ink-2);font-size:clamp(1.05rem,1rem + .4vw,1.25rem);line-height:1.55}
 .meet-actions{display:flex;flex-wrap:wrap;align-items:center;gap:1rem .9rem;margin-top:.4rem}
 .meet-actions .cta{margin-top:0;font-family:inherit;cursor:pointer}
+.meet-plug{
+  padding-top:1.1rem;
+  border-top:1px solid color-mix(in srgb,var(--ink-2) 25%,transparent);
+  color:var(--ink-2);font-size:.98rem;line-height:1.55;
+}
+.meet-plug a{color:var(--accent-text);font-weight:560;text-underline-offset:3px}
+.meet-plug a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 
 /* ================= the motion chip =================
    iOS only: DeviceOrientationEvent.requestPermission needs a user gesture,
@@ -860,6 +867,7 @@ html.meet .meet-overlay{
       </a>
       <button type="button" class="cta cta--ghost meet-go">Carry on to the page</button>
     </div>
+    <p class="meet-plug">Got something launching soon? <a href="https://launchengine.app" target="_blank" rel="noopener">Grab a free LaunchEngine account on me</a> — I made it, after all.</p>
   </div>
 </div>
 
